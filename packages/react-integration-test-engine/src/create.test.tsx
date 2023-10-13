@@ -144,3 +144,131 @@ describe("accessors", () => {
 		expect(mockedCreateAccessors).toHaveBeenNthCalledWith(2, qs, params2);
 	});
 });
+
+describe("wrappers", () => {
+	test("throw an error if `wrapperDefaultParams` is not provided", () => {
+		expect(() => {
+			const render = create(TestComponent, defaultProps, {
+				queries: {},
+				wrappers: {},
+			});
+
+			render({});
+		}).toThrow();
+	});
+
+	test("collect rendered component", () => {
+		const result1 = <div>Wrapper 1</div>;
+		const wrapper1 = vi.fn().mockReturnValue([result1, null]);
+
+		const result2 = <div>Wrapper 2</div>;
+		const wrapper2 = vi.fn().mockReturnValue([result2, null]);
+
+		const render = create(TestComponent, defaultProps, {
+			queries: {},
+			wrappers: {
+				wrapper1,
+				wrapper2,
+			},
+			wrapperDefaultParams: {
+				wrapper1: {},
+				wrapper2: {},
+			},
+		});
+
+		render({});
+
+		expect(mockedRender).toHaveBeenCalledTimes(1);
+		expect(mockedRender).toHaveBeenCalledWith(result2);
+
+		expect(wrapper2).toHaveBeenCalledTimes(1);
+		expect(wrapper2.mock.calls[0][0]).toBe(result1);
+
+		expect(wrapper1).toHaveBeenCalledTimes(1);
+		expect(wrapper1.mock.calls[0][0]).toHaveProperty("type", TestComponent);
+	});
+
+	test("fill results", () => {
+		const wrapper1 = vi.fn().mockReturnValue([
+			<div />,
+			{
+				foo: "bar",
+			},
+		]);
+
+		const wrapper2 = vi.fn().mockReturnValue([
+			<div />,
+			{
+				baz: 3,
+			},
+		]);
+
+		const render = create(TestComponent, defaultProps, {
+			queries: {},
+			wrappers: {
+				wrapper1,
+				wrapper2,
+			},
+			wrapperDefaultParams: {
+				wrapper1: {},
+				wrapper2: {},
+			},
+		});
+
+		const { wrappers } = render({});
+
+		expect(wrappers).toEqual({
+			wrapper1: {
+				foo: "bar",
+			},
+			wrapper2: {
+				baz: 3,
+			},
+		});
+	});
+
+	test("call with correct parameters", () => {
+		const wrapper1 = vi.fn().mockReturnValue([<div />, null]);
+
+		const wrapper2 = vi.fn().mockReturnValue([<div />, null]);
+
+		const render = create(TestComponent, defaultProps, {
+			queries: {},
+			wrappers: {
+				wrapper1,
+				wrapper2,
+			},
+			wrapperDefaultParams: {
+				wrapper1: {
+					param1_1: "defaultValue1_1",
+					param1_2: "defaultValue1_2",
+				},
+				wrapper2: {
+					param2_1: "defaultValue2_1",
+				},
+			},
+		});
+
+		const { wrappers } = render(
+			{},
+			{
+				wrapperParams: {
+					wrapper1: {
+						param1_1: "redefinedValue1_1",
+					},
+				},
+			},
+		);
+
+		expect(wrapper1).toHaveBeenCalledTimes(1);
+		expect(wrapper1.mock.calls[0][1]).toEqual({
+			param1_1: "redefinedValue1_1",
+			param1_2: "defaultValue1_2",
+		});
+
+		expect(wrapper2).toHaveBeenCalledTimes(1);
+		expect(wrapper2.mock.calls[0][1]).toEqual({
+			param2_1: "defaultValue2_1",
+		});
+	});
+});

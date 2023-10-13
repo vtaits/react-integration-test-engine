@@ -1,4 +1,5 @@
 import type { RenderResult } from "@testing-library/react";
+import type { ReactElement } from "react";
 
 export enum AccessorQueryType {
 	Role = "Role",
@@ -55,16 +56,42 @@ export type AccessorParamsType = Readonly<
 	  }
 >;
 
+export type WrapperType<
+	ParamsType extends Record<string, unknown>,
+	ResultType,
+> = (children: ReactElement, params: ParamsType) => [ReactElement, ResultType];
+
 /**
  * Options of the engine
  */
-export type OptionsType<Queries extends Record<string, AccessorParamsType>,> = {
+export type OptionsType<
+	Queries extends Record<string, AccessorParamsType>,
+	Wrappers extends Record<
+		string,
+		// biome-ignore lint/suspicious/noExplicitAny: supports any params and result
+		WrapperType<any, any>
+	>,
+> = Readonly<{
 	queries: Queries;
-};
+	wrappers?: Wrappers;
+	wrapperDefaultParams?: {
+		[Key in keyof Wrappers]: Parameters<Wrappers[Key]>[1];
+	};
+}>;
 
-export type EngineType<Queries extends Record<string, AccessorParamsType>,> = {
+export type EngineType<
+	Queries extends Record<string, AccessorParamsType>,
+	Wrappers extends Record<
+		string,
+		// biome-ignore lint/suspicious/noExplicitAny: supports any params and result
+		WrapperType<any, any>
+	>,
+> = Readonly<{
 	qs: RenderResult;
 	accessors: {
 		[Key in keyof Queries]: AccessorsType;
 	};
-};
+	wrappers: {
+		[Key in keyof Wrappers]: ReturnType<Wrappers[Key]>[1];
+	};
+}>;
