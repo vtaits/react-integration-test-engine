@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent } from "@testing-library/react";
+import { cleanup } from "@testing-library/react";
 import { type ReactElement, createContext, useContext } from "react";
 import { afterEach, expect, test } from "vitest";
 import { AccessorQueryType, type WrapperType, create } from "..";
@@ -74,6 +74,10 @@ const render = create(
 
 			dummy: {},
 		},
+
+		fireEvents: {
+			buttonClick: ["button", "click"],
+		},
 	},
 );
 
@@ -101,15 +105,11 @@ test("increase value", () => {
 
 	expect(engine.wrappers.counter.getValue()).toBe(5);
 
-	act(() => {
-		fireEvent.click(engine.accessors.button.get());
-	});
+	engine.fireEvent("buttonClick");
 
 	expect(engine.wrappers.counter.getValue()).toBe(6);
 
-	act(() => {
-		fireEvent.click(engine.accessors.button.get());
-	});
+	engine.fireEvent("buttonClick");
 
 	expect(engine.wrappers.counter.getValue()).toBe(7);
 });

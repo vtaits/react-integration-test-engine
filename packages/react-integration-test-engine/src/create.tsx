@@ -1,4 +1,4 @@
-import { render } from "@testing-library/react";
+import { type EventType, act, fireEvent, render } from "@testing-library/react";
 import mapValues from "lodash/mapValues";
 import type { ComponentType } from "react";
 
@@ -19,10 +19,16 @@ export function create<
 		// biome-ignore lint/suspicious/noExplicitAny: supports any params and result
 		WrapperType<any, any>
 	>,
+	FireEvents extends Record<string, [keyof Queries, EventType]>,
 >(
 	Component: ComponentType<Props>,
 	defaultProps: Props,
-	{ queries, wrappers, wrapperDefaultParams }: OptionsType<Queries, Wrappers>,
+	{
+		fireEvents,
+		queries,
+		wrappers,
+		wrapperDefaultParams,
+	}: OptionsType<Queries, Wrappers, FireEvents>,
 ) {
 	const renderEngine = (
 		props: Partial<Props>,
@@ -33,7 +39,7 @@ export function create<
 				[Key in keyof Wrappers]: Parameters<Wrappers[Key]>[1];
 			}>;
 		} = {},
-	): EngineType<Queries, Wrappers> => {
+	): EngineType<Queries, Wrappers, FireEvents> => {
 		let component = <Component {...defaultProps} {...props} />;
 
 		const wrapperResults: Partial<{
@@ -66,8 +72,29 @@ export function create<
 			[Key in keyof Queries]: AccessorsType;
 		};
 
+		const callFireEvent = (
+			eventKey: keyof FireEvents,
+			// biome-ignore lint/complexity/noBannedTypes: the format of `@testing-library/react`
+			options?: {} | undefined,
+		) => {
+			if (!fireEvents) {
+				throw new Error(
+					"[react-integration-test-engine] `fireEvents` is not provided",
+				);
+			}
+
+			const [accessor, nativeFireEventKey] = fireEvents[eventKey];
+
+			const element = accessors[accessor].get();
+
+			act(() => {
+				fireEvent[nativeFireEventKey](element, options);
+			});
+		};
+
 		return {
 			accessors,
+			fireEvent: callFireEvent,
 			qs,
 			wrappers: wrapperResults as {
 				[Key in keyof Wrappers]: ReturnType<Wrappers[Key]>[1];

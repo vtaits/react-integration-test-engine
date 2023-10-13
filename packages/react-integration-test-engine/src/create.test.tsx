@@ -1,4 +1,9 @@
-import { type RenderResult, render } from "@testing-library/react";
+import {
+	type RenderResult,
+	act,
+	fireEvent,
+	render,
+} from "@testing-library/react";
 import type { ReactElement } from "react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { create } from "./create";
@@ -10,6 +15,10 @@ import {
 } from "./types";
 
 vi.mock("@testing-library/react", () => ({
+	act: vi.fn(),
+	fireEvent: {
+		click: vi.fn(),
+	},
 	render: vi.fn(),
 }));
 const mockedRender = vi.mocked(render);
@@ -249,7 +258,7 @@ describe("wrappers", () => {
 			},
 		});
 
-		const { wrappers } = render(
+		render(
 			{},
 			{
 				wrapperParams: {
@@ -270,5 +279,62 @@ describe("wrappers", () => {
 		expect(wrapper2.mock.calls[0][1]).toEqual({
 			param2_1: "defaultValue2_1",
 		});
+	});
+});
+
+describe("fireEvent", () => {
+	test("should return value of the property", () => {
+		const element = document.createElement("div");
+
+		vi.mocked(accessors.get).mockReturnValue(element);
+
+		const engine = create(TestComponent, defaultProps, {
+			queries: {
+				accessorKey: {
+					query: AccessorQueryType.AltText,
+					parameters: ["test"],
+				},
+			},
+			fireEvents: {
+				handleClick: ["accessorKey", "click"],
+			},
+		});
+
+		const result = engine({});
+
+		const event = {
+			foo: "bar",
+		};
+
+		result.fireEvent("handleClick", event);
+
+		expect(act).toHaveBeenCalledTimes(1);
+		expect(fireEvent.click).toHaveBeenCalledTimes(0);
+
+		vi.mocked(act).mock.calls[0][0]();
+
+		expect(fireEvent.click).toHaveBeenCalledTimes(1);
+		expect(fireEvent.click).toHaveBeenCalledWith(element, event);
+	});
+
+	test("should throw an error if `fireEvents` is not provided", () => {
+		const element = document.createElement("div");
+
+		vi.mocked(accessors.get).mockReturnValue(element);
+
+		const engine = create(TestComponent, defaultProps, {
+			queries: {
+				accessorKey: {
+					query: AccessorQueryType.AltText,
+					parameters: ["test"],
+				},
+			},
+		});
+
+		const result = engine({});
+
+		expect(() => {
+			result.fireEvent("handleClick");
+		}).toThrow();
 	});
 });

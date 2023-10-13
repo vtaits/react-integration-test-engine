@@ -1,4 +1,4 @@
-import type { RenderResult } from "@testing-library/react";
+import type { EventType, RenderResult } from "@testing-library/react";
 import type { ReactElement } from "react";
 
 export enum AccessorQueryType {
@@ -71,12 +71,14 @@ export type OptionsType<
 		// biome-ignore lint/suspicious/noExplicitAny: supports any params and result
 		WrapperType<any, any>
 	>,
+	FireEvents extends Record<string, [keyof Queries, EventType]>,
 > = Readonly<{
 	queries: Queries;
 	wrappers?: Wrappers;
 	wrapperDefaultParams?: {
 		[Key in keyof Wrappers]: Parameters<Wrappers[Key]>[1];
 	};
+	fireEvents?: FireEvents;
 }>;
 
 export type EngineType<
@@ -86,6 +88,7 @@ export type EngineType<
 		// biome-ignore lint/suspicious/noExplicitAny: supports any params and result
 		WrapperType<any, any>
 	>,
+	FireEvents extends Record<string, [keyof Queries, EventType]>,
 > = Readonly<{
 	qs: RenderResult;
 	accessors: {
@@ -94,4 +97,6 @@ export type EngineType<
 	wrappers: {
 		[Key in keyof Wrappers]: ReturnType<Wrappers[Key]>[1];
 	};
+	// biome-ignore lint/complexity/noBannedTypes: the format of `@testing-library/react`
+	fireEvent: (eventKey: keyof FireEvents, options?: {} | undefined) => void;
 }>;
