@@ -11,6 +11,13 @@ import type {
 	WrapperType,
 } from "./types";
 
+/**
+ * Creates function that initializes engine for integration testing of react components
+ * @param Component target component
+ * @param defaultProps stubs for required props
+ * @param parameters named accessors, wrappers, events etc.
+ * @returns
+ */
 export function create<
 	Props,
 	Queries extends Record<string, AccessorParamsType>,
@@ -30,6 +37,12 @@ export function create<
 		wrapperDefaultParams,
 	}: OptionsType<Queries, Wrappers, FireEvents>,
 ) {
+	/**
+	 * function that renders components and initializes accessors, events, wrappers etc.
+	 * @param props props of target component
+	 * @param parameters parameters of wrappers
+	 * @returns engine for integration testing
+	 */
 	const renderEngine = (
 		props: Partial<Props>,
 		{

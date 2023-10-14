@@ -123,7 +123,7 @@ export type OptionsType<
 	FireEvents extends Record<string, [keyof Queries, EventType]>,
 > = Readonly<{
 	/**
-	 * An object whose values is queries to rendered elements, and keys can be used to access them
+	 * An object whose values are queries to rendered elements, and keys can be used to access them
 	 *
 	 * ```
 	 * const render = create(Component, defaultProps, {
@@ -147,7 +147,52 @@ export type OptionsType<
 	 * ```
 	 */
 	queries: Queries;
+	/**
+	 * An object whose values are wrappers, and keys can be used to access them
+	 *
+	 * A rough example:
+	 *
+	 * ```
+	 * const AwesomeContext = createContext(0);
+	 *
+	 * const render = create(Component, defaultProps, {
+	 *   queries: {},
+	 *
+	 *   wrappers: {
+	 *     awesome: (children, initialValue) => {
+	 *       let value = initialValue;
+	 *
+	 *       const getActualValue = () => value;
+	 *
+	 *       return [
+	 *         <AwesomeContext.Provider value={value}>
+	 *           {children}
+	 *         </AwesomeContext.Provider>,
+	 *         getActualValue,
+	 *       ];
+	 *     },
+	 *   },
+	 *
+	 *   wrapperDefaultParams: {
+	 *     awesome: 0,
+	 *   },
+	 * });
+	 *
+	 * const engine = render({}, {
+	 *   wrapperParams: {
+	 *     awesome: 3,
+	 *   },
+	 * });
+	 *
+	 * const awesomeValue = engine.wrappers.awesome();
+	 * ```
+	 *
+	 * See an example https://github.com/vtaits/react-integration-test-engine/blob/main/packages/react-integration-test-engine/src/tests/wrappers.test.tsx
+	 */
 	wrappers?: Wrappers;
+	/**
+	 * Default parameters of wrappers, see `wrappers` property
+	 */
 	wrapperDefaultParams?: {
 		[Key in keyof Wrappers]: Parameters<Wrappers[Key]>[1];
 	};
@@ -216,6 +261,48 @@ export type EngineType<
 	accessors: {
 		[Key in keyof Queries]: AccessorsType;
 	};
+	/**
+	 * An object whose keys are keys of `wrappers` from options, and values are results of wrappers
+	 *
+	 * A rough example:
+	 *
+	 * ```
+	 * const AwesomeContext = createContext(0);
+	 *
+	 * const render = create(Component, defaultProps, {
+	 *   queries: {},
+	 *
+	 *   wrappers: {
+	 *     awesome: (children, initialValue) => {
+	 *       let value = initialValue;
+	 *
+	 *       const getActualValue = () => value;
+	 *
+	 *       return [
+	 *         <AwesomeContext.Provider value={value}>
+	 *           {children}
+	 *         </AwesomeContext.Provider>,
+	 *         getActualValue,
+	 *       ];
+	 *     },
+	 *   },
+	 *
+	 *   wrapperDefaultParams: {
+	 *     awesome: 0,
+	 *   },
+	 * });
+	 *
+	 * const engine = render({}, {
+	 *   wrapperParams: {
+	 *     awesome: 3,
+	 *   },
+	 * });
+	 *
+	 * const awesomeValue = engine.wrappers.awesome();
+	 * ```
+	 *
+	 * See an example https://github.com/vtaits/react-integration-test-engine/blob/main/packages/react-integration-test-engine/src/tests/wrappers.test.tsx
+	 */
 	wrappers: {
 		[Key in keyof Wrappers]: ReturnType<Wrappers[Key]>[1];
 	};
