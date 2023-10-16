@@ -58,40 +58,82 @@ export type AccessorsType = Readonly<{
 	find: () => Promise<HTMLElement>;
 }>;
 
-export type AccessorParamsType = Readonly<
-	| {
-			query: AccessorQueryType.Role;
-			parameters: Parameters<RenderResult["getByRole"]>;
-	  }
-	| {
-			query: AccessorQueryType.LabelText;
-			parameters: Parameters<RenderResult["getByLabelText"]>;
-	  }
-	| {
-			query: AccessorQueryType.PlaceholderText;
-			parameters: Parameters<RenderResult["getByPlaceholderText"]>;
-	  }
-	| {
-			query: AccessorQueryType.Text;
-			parameters: Parameters<RenderResult["getByText"]>;
-	  }
-	| {
-			query: AccessorQueryType.DisplayValue;
-			parameters: Parameters<RenderResult["getByDisplayValue"]>;
-	  }
-	| {
-			query: AccessorQueryType.AltText;
-			parameters: Parameters<RenderResult["getByAltText"]>;
-	  }
-	| {
-			query: AccessorQueryType.Title;
-			parameters: Parameters<RenderResult["getByTitle"]>;
-	  }
-	| {
-			query: AccessorQueryType.TestId;
-			parameters: Parameters<RenderResult["getByTestId"]>;
-	  }
->;
+export type AccessorParamsBaseType = Readonly<{
+	/**
+	 * Function for get needed element by target element. For example, get input by label in cluttered layout
+	 * @param targetElement element that found by query and parameters
+	 * @returns element that will be a result of calling the method of accessor
+	 *
+	 * Example for `Radio` from `antd@5.10.1`
+	 *
+	 * ```
+	 * const render = create(Component, defaultProps, {
+	 *   queries: {
+	 *     radio: {
+	 *       query: AccessorQueryType.Text,
+	 *       parameters: ["Radio"],
+	 *       mapper: (radioLabel) => {
+	 *         const wrapper = radioLabel.closest(".ant-radio-wrapper");
+	 *
+	 *         if (!wrapper) {
+	 *           throw new Error("radio wrapper is not found");
+	 *         }
+	 *
+	 *         const input = wrapper.querySelector("input");
+	 *
+	 *         if (!input) {
+	 *           throw new Error("radio input is not found");
+	 *         }
+	 *
+	 *         return input as HTMLElement;
+	 *       },
+	 *     },
+	 *   },
+	 * });
+	 *
+	 * const engine = render({});
+	 *
+	 * const radioInput = page.accessors.radio.get();
+	 * ```
+	 */
+	mapper?: (targetElement: HTMLElement) => HTMLElement;
+}>;
+
+export type AccessorParamsType = AccessorParamsBaseType &
+	Readonly<
+		| {
+				query: AccessorQueryType.Role;
+				parameters: Parameters<RenderResult["getByRole"]>;
+		  }
+		| {
+				query: AccessorQueryType.LabelText;
+				parameters: Parameters<RenderResult["getByLabelText"]>;
+		  }
+		| {
+				query: AccessorQueryType.PlaceholderText;
+				parameters: Parameters<RenderResult["getByPlaceholderText"]>;
+		  }
+		| {
+				query: AccessorQueryType.Text;
+				parameters: Parameters<RenderResult["getByText"]>;
+		  }
+		| {
+				query: AccessorQueryType.DisplayValue;
+				parameters: Parameters<RenderResult["getByDisplayValue"]>;
+		  }
+		| {
+				query: AccessorQueryType.AltText;
+				parameters: Parameters<RenderResult["getByAltText"]>;
+		  }
+		| {
+				query: AccessorQueryType.Title;
+				parameters: Parameters<RenderResult["getByTitle"]>;
+		  }
+		| {
+				query: AccessorQueryType.TestId;
+				parameters: Parameters<RenderResult["getByTestId"]>;
+		  }
+	>;
 
 /**
  * A wrapper for current component. Can be used for integration
