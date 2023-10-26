@@ -1,8 +1,12 @@
-import type { EventType, RenderResult } from "@testing-library/react";
+import type {
+	EventType,
+	RenderResult,
+	waitForOptions,
+} from "@testing-library/react";
 import type { ReactElement } from "react";
 
 /**
- * Type of `testing-library` query
+ * Type of `testing-library` query + `QuerySelector` for css-selections
  *
  * See https://testing-library.com/docs/queries/about/#priority
  */
@@ -15,6 +19,7 @@ export enum AccessorQueryType {
 	AltText = "AltText",
 	Title = "Title",
 	TestId = "TestId",
+	QuerySelector = "QuerySelector",
 }
 
 /**
@@ -132,6 +137,15 @@ export type AccessorParamsType = AccessorParamsBaseType &
 		| {
 				query: AccessorQueryType.TestId;
 				parameters: Parameters<RenderResult["getByTestId"]>;
+		  }
+		| {
+				query: AccessorQueryType.QuerySelector;
+				parameters: [
+					string,
+					{
+						waitForElementOptions?: waitForOptions;
+					}?,
+				];
 		  }
 	>;
 

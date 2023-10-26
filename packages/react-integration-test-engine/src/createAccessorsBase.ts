@@ -1,4 +1,4 @@
-import type { RenderResult } from "@testing-library/react";
+import { type RenderResult, waitFor } from "@testing-library/react";
 import {
 	type AccessorParamsType,
 	AccessorQueryType,
@@ -89,6 +89,108 @@ export function createAccessorsBase(
 				findAll: () => qs.findAllByTestId(...params.parameters),
 				find: () => qs.findByTestId(...params.parameters),
 			};
+
+		case AccessorQueryType.QuerySelector: {
+			const { baseElement } = qs;
+
+			const [selector, options] = params.parameters;
+
+			return {
+				getAll: () => {
+					const result = baseElement.querySelectorAll(selector);
+
+					if (result.length === 0) {
+						throw new Error(
+							`[react-integration-test-engine] there is no matched elements for the selector "${selector}"`,
+						);
+					}
+
+					return [...result] as HTMLElement[];
+				},
+
+				get: () => {
+					const result = baseElement.querySelectorAll(selector);
+
+					if (result.length === 0) {
+						throw new Error(
+							`[react-integration-test-engine] there is no matched elements for the selector "${selector}"`,
+						);
+					}
+
+					if (result.length > 1) {
+						throw new Error(
+							`[react-integration-test-engine] there is no matched elements for the selector "${selector}"`,
+						);
+					}
+
+					return result[0] as HTMLElement;
+				},
+
+				queryAll: () => {
+					const result = baseElement.querySelectorAll(selector);
+
+					return [...result] as HTMLElement[];
+				},
+
+				query: () => {
+					const result = baseElement.querySelectorAll(selector);
+
+					if (result.length === 0) {
+						return null;
+					}
+
+					if (result.length > 1) {
+						throw new Error(
+							`[react-integration-test-engine] there is no matched elements for the selector "${selector}"`,
+						);
+					}
+
+					return result[0] as HTMLElement;
+				},
+
+				findAll: async () => {
+					const waitForElementOptions = options?.waitForElementOptions;
+
+					const result = await waitFor(() => {
+						const iterResult = baseElement.querySelectorAll(selector);
+
+						if (iterResult.length === 0) {
+							throw new Error(
+								`[react-integration-test-engine] there is no matched elements for the selector "${selector}"`,
+							);
+						}
+
+						return [...iterResult] as HTMLElement[];
+					}, waitForElementOptions);
+
+					return result;
+				},
+
+				find: async () => {
+					const waitForElementOptions = options?.waitForElementOptions;
+
+					const result = await waitFor(() => {
+						const iterResult = baseElement.querySelectorAll(selector);
+
+						if (iterResult.length === 0) {
+							throw new Error(
+								`[react-integration-test-engine] there is no matched elements for the selector "${selector}"`,
+							);
+						}
+
+						if (iterResult.length > 1) {
+							throw new Error(
+								`[react-integration-test-engine] there is no matched elements for the selector "${selector}"`,
+							);
+						}
+
+						return iterResult[0] as HTMLElement;
+					}, waitForElementOptions);
+
+					return result;
+				},
+			};
+		}
 
 		default:
 			throw new Error("[react-integration-test-engine] unknown query");

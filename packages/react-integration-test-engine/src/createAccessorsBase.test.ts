@@ -1,9 +1,17 @@
-import type { RenderResult } from "@testing-library/react";
+import { type RenderResult, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { createAccessorsBase } from "./createAccessorsBase";
 import { type AccessorParamsType, AccessorQueryType } from "./types";
 
+vi.mock("@testing-library/react");
+const mockedWaitFor = vi.mocked(waitFor);
+
+const querySelectorAll = vi.fn();
+
 const qs = {
+	baseElement: {
+		querySelectorAll,
+	},
 	getAllByRole: vi.fn(),
 	getByRole: vi.fn(),
 	queryAllByRole: vi.fn(),
@@ -56,7 +64,9 @@ const qs = {
 
 beforeEach(() => {
 	Object.entries(qs).forEach(([key, mock]) => {
-		mock.mockReturnValue(`${key} return`);
+		if (typeof mock === "function") {
+			mock.mockReturnValue(`${key} return`);
+		}
 	});
 });
 
@@ -103,6 +113,10 @@ describe.each([
 		expect(accessor()).toBe(`${functionName} return`);
 
 		Object.entries(qs).forEach(([key, mock]) => {
+			if (typeof mock !== "function") {
+				return;
+			}
+
 			if (key === functionName) {
 				expect(mock).toHaveBeenCalledTimes(1);
 				expect(mock).toHaveBeenCalledWith("arg1", {
@@ -112,6 +126,310 @@ describe.each([
 			} else {
 				expect(mock).toHaveBeenCalledTimes(0);
 			}
+		});
+	});
+});
+
+describe("QuerySelector", () => {
+	const selector = "div > span";
+
+	const accessors = createAccessorsBase(qs as unknown as RenderResult, {
+		query: AccessorQueryType.QuerySelector,
+		parameters: [selector],
+	});
+
+	describe("get", () => {
+		test("call `querySelectorAll` with correct parameters", () => {
+			querySelectorAll.mockReturnValue([document.createElement("div")]);
+
+			accessors.get();
+
+			expect(querySelectorAll).toHaveBeenCalledTimes(1);
+			expect(querySelectorAll).toHaveBeenCalledWith(selector);
+		});
+
+		test("throw an error if there are no mathed elements", () => {
+			querySelectorAll.mockReturnValue([]);
+
+			expect(() => {
+				accessors.get();
+			}).toThrow();
+		});
+
+		test("throw an error if there are more that one mathed elements", () => {
+			querySelectorAll.mockReturnValue([
+				document.createElement("div"),
+				document.createElement("span"),
+			]);
+
+			expect(() => {
+				accessors.get();
+			}).toThrow();
+		});
+
+		test("return matched element", () => {
+			const result = document.createElement("div");
+
+			querySelectorAll.mockReturnValue([result]);
+
+			expect(accessors.get()).toBe(result);
+		});
+	});
+
+	describe("getAll", () => {
+		test("call `querySelectorAll` with correct parameters", () => {
+			querySelectorAll.mockReturnValue([document.createElement("div")]);
+
+			accessors.getAll();
+
+			expect(querySelectorAll).toHaveBeenCalledTimes(1);
+			expect(querySelectorAll).toHaveBeenCalledWith(selector);
+		});
+
+		test("throw an error if there are no mathed elements", () => {
+			querySelectorAll.mockReturnValue([]);
+
+			expect(() => {
+				accessors.getAll();
+			}).toThrow();
+		});
+
+		test("return matched elements", () => {
+			const result = [
+				document.createElement("div"),
+				document.createElement("span"),
+			];
+
+			querySelectorAll.mockReturnValue(result);
+
+			expect(accessors.getAll()).toEqual(result);
+		});
+	});
+
+	describe("query", () => {
+		test("call `querySelectorAll` with correct parameters", () => {
+			querySelectorAll.mockReturnValue([document.createElement("div")]);
+
+			accessors.query();
+
+			expect(querySelectorAll).toHaveBeenCalledTimes(1);
+			expect(querySelectorAll).toHaveBeenCalledWith(selector);
+		});
+
+		test("throw an error if there are more that one mathed elements", () => {
+			querySelectorAll.mockReturnValue([
+				document.createElement("div"),
+				document.createElement("span"),
+			]);
+
+			expect(() => {
+				accessors.query();
+			}).toThrow();
+		});
+
+		test("return `null` if there are no mathed elements", () => {
+			querySelectorAll.mockReturnValue([]);
+
+			expect(accessors.query()).toBe(null);
+		});
+
+		test("return matched element", () => {
+			const result = document.createElement("div");
+
+			querySelectorAll.mockReturnValue([result]);
+
+			expect(accessors.query()).toBe(result);
+		});
+	});
+
+	describe("queryAll", () => {
+		test("call `querySelectorAll` with correct parameters", () => {
+			querySelectorAll.mockReturnValue([document.createElement("div")]);
+
+			accessors.queryAll();
+
+			expect(querySelectorAll).toHaveBeenCalledTimes(1);
+			expect(querySelectorAll).toHaveBeenCalledWith(selector);
+		});
+
+		test("return an empty array if there are no mathed elements", () => {
+			querySelectorAll.mockReturnValue([]);
+
+			expect(accessors.queryAll()).toEqual([]);
+		});
+
+		test("return matched elements", () => {
+			const result = [
+				document.createElement("div"),
+				document.createElement("span"),
+			];
+
+			querySelectorAll.mockReturnValue(result);
+
+			expect(accessors.queryAll()).toEqual(result);
+		});
+	});
+
+	describe("find", () => {
+		test("call `waitFor` without parameters", async () => {
+			await accessors.find();
+
+			expect(mockedWaitFor.mock.calls[0][1]).toBeFalsy();
+		});
+
+		test("call `waitFor` with parameters", async () => {
+			const waitForElementOptions = {
+				interval: 10,
+				timeout: 20,
+			};
+
+			await createAccessorsBase(qs as unknown as RenderResult, {
+				query: AccessorQueryType.QuerySelector,
+				parameters: [
+					selector,
+					{
+						waitForElementOptions,
+					},
+				],
+			}).find();
+
+			expect(mockedWaitFor.mock.calls[0][1]).toBe(waitForElementOptions);
+		});
+
+		test("return result of `waitFor`", async () => {
+			const result = document.createElement("div");
+
+			mockedWaitFor.mockResolvedValue(result);
+
+			const accessorResult = await accessors.find();
+
+			expect(accessorResult).toBe(result);
+		});
+
+		test("call `querySelectorAll` with correct parameters", async () => {
+			const result = document.createElement("div");
+
+			mockedWaitFor.mockResolvedValue(result);
+
+			querySelectorAll.mockReturnValue([document.createElement("div")]);
+
+			await accessors.find();
+
+			mockedWaitFor.mock.calls[0][0]();
+
+			expect(querySelectorAll).toHaveBeenCalledTimes(1);
+			expect(querySelectorAll).toHaveBeenCalledWith(selector);
+		});
+
+		test("throw an error if there are no mathed elements", async () => {
+			querySelectorAll.mockReturnValue([]);
+
+			await accessors.find();
+
+			expect(() => {
+				mockedWaitFor.mock.calls[0][0]();
+			}).toThrow();
+		});
+
+		test("throw an error if there are more that one mathed elements", async () => {
+			querySelectorAll.mockReturnValue([
+				document.createElement("div"),
+				document.createElement("span"),
+			]);
+
+			await accessors.find();
+
+			expect(() => {
+				mockedWaitFor.mock.calls[0][0]();
+			}).toThrow();
+		});
+
+		test("return matched element", async () => {
+			const result = document.createElement("div");
+
+			querySelectorAll.mockReturnValue([result]);
+
+			await accessors.find();
+
+			expect(mockedWaitFor.mock.calls[0][0]()).toBe(result);
+		});
+	});
+
+	describe("findAll", () => {
+		test("call `waitFor` without parameters", async () => {
+			await accessors.findAll();
+
+			expect(mockedWaitFor.mock.calls[0][1]).toBeFalsy();
+		});
+
+		test("call `waitFor` with parameters", async () => {
+			const waitForElementOptions = {
+				interval: 10,
+				timeout: 20,
+			};
+
+			await createAccessorsBase(qs as unknown as RenderResult, {
+				query: AccessorQueryType.QuerySelector,
+				parameters: [
+					selector,
+					{
+						waitForElementOptions,
+					},
+				],
+			}).findAll();
+
+			expect(mockedWaitFor.mock.calls[0][1]).toBe(waitForElementOptions);
+		});
+
+		test("return result of `waitFor`", async () => {
+			const result = [
+				document.createElement("div"),
+				document.createElement("span"),
+			];
+
+			mockedWaitFor.mockResolvedValue(result);
+
+			const accessorResult = await accessors.findAll();
+
+			expect(accessorResult).toBe(result);
+		});
+
+		test("call `querySelectorAll` with correct parameters", async () => {
+			const result = document.createElement("div");
+
+			mockedWaitFor.mockResolvedValue(result);
+
+			querySelectorAll.mockReturnValue([document.createElement("div")]);
+
+			await accessors.findAll();
+
+			mockedWaitFor.mock.calls[0][0]();
+
+			expect(querySelectorAll).toHaveBeenCalledTimes(1);
+			expect(querySelectorAll).toHaveBeenCalledWith(selector);
+		});
+
+		test("throw an error if there are no mathed elements", async () => {
+			querySelectorAll.mockReturnValue([]);
+
+			await accessors.findAll();
+
+			expect(() => {
+				mockedWaitFor.mock.calls[0][0]();
+			}).toThrow();
+		});
+
+		test("return matched element", async () => {
+			const result = [
+				document.createElement("div"),
+				document.createElement("span"),
+			];
+
+			querySelectorAll.mockReturnValue(result);
+
+			await accessors.findAll();
+
+			expect(mockedWaitFor.mock.calls[0][0]()).toEqual(result);
 		});
 	});
 });
