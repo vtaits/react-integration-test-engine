@@ -103,35 +103,61 @@ describe.each([
 		],
 	} as unknown as AccessorParamsType);
 
-	test.each([
-		["getAll"],
-		["get"],
-		["queryAll"],
-		["query"],
-		["findAll"],
-		["find"],
-	] as const)("accessor key = %s", (accessorKey) => {
-		expect(getQs).toHaveBeenCalledTimes(0);
+	test.each([["getAll"], ["get"], ["queryAll"], ["query"]] as const)(
+		"accessor key = %s",
+		(accessorKey) => {
+			expect(getQs).toHaveBeenCalledTimes(0);
 
-		const accessor = accessors[accessorKey];
+			const accessor = accessors[accessorKey];
 
-		const functionName = `${accessorKey}By${queryName}`;
+			const functionName = `${accessorKey}By${queryName}`;
 
-		expect(accessor()).toBe(`${functionName} return`);
+			expect(accessor()).toBe(`${functionName} return`);
 
-		expect(getQs).toHaveBeenCalledTimes(1);
-		Object.entries(qs).forEach(([key, mock]) => {
-			if (key === functionName) {
-				expect(mock).toHaveBeenCalledTimes(1);
-				expect(mock).toHaveBeenCalledWith("arg1", {
-					checked: true,
-					pressed: false,
-				});
-			} else {
-				expect(mock).toHaveBeenCalledTimes(0);
-			}
-		});
-	});
+			expect(getQs).toHaveBeenCalledTimes(1);
+			Object.entries(qs).forEach(([key, mock]) => {
+				if (key === functionName) {
+					expect(mock).toHaveBeenCalledTimes(1);
+					expect(mock).toHaveBeenCalledWith("arg1", {
+						checked: true,
+						pressed: false,
+					});
+				} else {
+					expect(mock).toHaveBeenCalledTimes(0);
+				}
+			});
+		},
+	);
+
+	test.each([["findAll"], ["find"]] as const)(
+		"accessor key = %s",
+		async (accessorKey) => {
+			vi.mocked(waitFor).mockResolvedValue(qs);
+			expect(getQs).toHaveBeenCalledTimes(0);
+
+			const accessor = accessors[accessorKey];
+
+			const functionName = `${accessorKey}By${queryName}`;
+
+			const accessorResult = await accessor();
+
+			expect(accessorResult).toBe(`${functionName} return`);
+
+			expect(waitFor).toHaveBeenCalledTimes(1);
+			expect(waitFor).toHaveBeenCalledWith(getQs);
+			Object.entries(qs).forEach(([key, mock]) => {
+				if (key === functionName) {
+					expect(mock).toHaveBeenCalledTimes(1);
+					expect(mock).toHaveBeenCalledWith("arg1", {
+						checked: true,
+						pressed: false,
+					});
+				} else {
+					expect(mock).toHaveBeenCalledTimes(0);
+				}
+			});
+		},
+	);
 });
 
 describe("QuerySelector", () => {

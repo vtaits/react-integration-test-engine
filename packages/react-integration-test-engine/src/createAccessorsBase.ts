@@ -18,8 +18,16 @@ export function createAccessorsBase(
 				get: () => getQs().getByRole(...params.parameters),
 				queryAll: () => getQs().queryAllByRole(...params.parameters),
 				query: () => getQs().queryByRole(...params.parameters),
-				findAll: () => getQs().findAllByRole(...params.parameters),
-				find: () => getQs().findByRole(...params.parameters),
+				findAll: async () => {
+					const qs = await waitFor(getQs);
+
+					return qs.findAllByRole(...params.parameters);
+				},
+				find: async () => {
+					const qs = await waitFor(getQs);
+
+					return qs.findByRole(...params.parameters);
+				},
 			};
 
 		case AccessorQueryType.LabelText:
@@ -28,8 +36,16 @@ export function createAccessorsBase(
 				get: () => getQs().getByLabelText(...params.parameters),
 				queryAll: () => getQs().queryAllByLabelText(...params.parameters),
 				query: () => getQs().queryByLabelText(...params.parameters),
-				findAll: () => getQs().findAllByLabelText(...params.parameters),
-				find: () => getQs().findByLabelText(...params.parameters),
+				findAll: async () => {
+					const qs = await waitFor(getQs);
+
+					return qs.findAllByLabelText(...params.parameters);
+				},
+				find: async () => {
+					const qs = await waitFor(getQs);
+
+					return qs.findByLabelText(...params.parameters);
+				},
 			};
 
 		case AccessorQueryType.PlaceholderText:
@@ -38,8 +54,16 @@ export function createAccessorsBase(
 				get: () => getQs().getByPlaceholderText(...params.parameters),
 				queryAll: () => getQs().queryAllByPlaceholderText(...params.parameters),
 				query: () => getQs().queryByPlaceholderText(...params.parameters),
-				findAll: () => getQs().findAllByPlaceholderText(...params.parameters),
-				find: () => getQs().findByPlaceholderText(...params.parameters),
+				findAll: async () => {
+					const qs = await waitFor(getQs);
+
+					return qs.findAllByPlaceholderText(...params.parameters);
+				},
+				find: async () => {
+					const qs = await waitFor(getQs);
+
+					return qs.findByPlaceholderText(...params.parameters);
+				},
 			};
 
 		case AccessorQueryType.Text:
@@ -48,8 +72,16 @@ export function createAccessorsBase(
 				get: () => getQs().getByText(...params.parameters),
 				queryAll: () => getQs().queryAllByText(...params.parameters),
 				query: () => getQs().queryByText(...params.parameters),
-				findAll: () => getQs().findAllByText(...params.parameters),
-				find: () => getQs().findByText(...params.parameters),
+				findAll: async () => {
+					const qs = await waitFor(getQs);
+
+					return qs.findAllByText(...params.parameters);
+				},
+				find: async () => {
+					const qs = await waitFor(getQs);
+
+					return qs.findByText(...params.parameters);
+				},
 			};
 
 		case AccessorQueryType.DisplayValue:
@@ -58,8 +90,16 @@ export function createAccessorsBase(
 				get: () => getQs().getByDisplayValue(...params.parameters),
 				queryAll: () => getQs().queryAllByDisplayValue(...params.parameters),
 				query: () => getQs().queryByDisplayValue(...params.parameters),
-				findAll: () => getQs().findAllByDisplayValue(...params.parameters),
-				find: () => getQs().findByDisplayValue(...params.parameters),
+				findAll: async () => {
+					const qs = await waitFor(getQs);
+
+					return qs.findAllByDisplayValue(...params.parameters);
+				},
+				find: async () => {
+					const qs = await waitFor(getQs);
+
+					return qs.findByDisplayValue(...params.parameters);
+				},
 			};
 
 		case AccessorQueryType.AltText:
@@ -68,8 +108,16 @@ export function createAccessorsBase(
 				get: () => getQs().getByAltText(...params.parameters),
 				queryAll: () => getQs().queryAllByAltText(...params.parameters),
 				query: () => getQs().queryByAltText(...params.parameters),
-				findAll: () => getQs().findAllByAltText(...params.parameters),
-				find: () => getQs().findByAltText(...params.parameters),
+				findAll: async () => {
+					const qs = await waitFor(getQs);
+
+					return qs.findAllByAltText(...params.parameters);
+				},
+				find: async () => {
+					const qs = await waitFor(getQs);
+
+					return qs.findByAltText(...params.parameters);
+				},
 			};
 
 		case AccessorQueryType.Title:
@@ -78,8 +126,16 @@ export function createAccessorsBase(
 				get: () => getQs().getByTitle(...params.parameters),
 				queryAll: () => getQs().queryAllByTitle(...params.parameters),
 				query: () => getQs().queryByTitle(...params.parameters),
-				findAll: () => getQs().findAllByTitle(...params.parameters),
-				find: () => getQs().findByTitle(...params.parameters),
+				findAll: async () => {
+					const qs = await waitFor(getQs);
+
+					return qs.findAllByTitle(...params.parameters);
+				},
+				find: async () => {
+					const qs = await waitFor(getQs);
+
+					return qs.findByTitle(...params.parameters);
+				},
 			};
 
 		case AccessorQueryType.TestId:
@@ -88,8 +144,16 @@ export function createAccessorsBase(
 				get: () => getQs().getByTestId(...params.parameters),
 				queryAll: () => getQs().queryAllByTestId(...params.parameters),
 				query: () => getQs().queryByTestId(...params.parameters),
-				findAll: () => getQs().findAllByTestId(...params.parameters),
-				find: () => getQs().findByTestId(...params.parameters),
+				findAll: async () => {
+					const qs = await waitFor(getQs);
+
+					return qs.findAllByTestId(...params.parameters);
+				},
+				find: async () => {
+					const qs = await waitFor(getQs);
+
+					return qs.findByTestId(...params.parameters);
+				},
 			};
 
 		case AccessorQueryType.QuerySelector: {

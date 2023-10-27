@@ -154,6 +154,9 @@ export type AccessorParamsBaseType = Readonly<{
 	 * ```
 	 */
 	mapper?: (targetElement: HTMLElement) => HTMLElement;
+	/**
+	 * Accessor of the parent element, can be used for same elements, e.g. lists of snippets, rows of tables
+	 */
 	parent?: AccessorParamsType;
 }>;
 
