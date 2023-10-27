@@ -2,7 +2,10 @@
   "name": "react-integration-test-engine",
   "version": "1.2.0",
   "description": "Integration test utils for react components",
-  "repository": "git@github.com:vtaits/react-integration-test-engine.git",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/vtaits/react-integration-test-engine.git"
+  },
   "homepage": "https://vtaits.github.io/react-integration-test-engine/",
   "license": "MIT",
   "author": "Vadim Taits",
