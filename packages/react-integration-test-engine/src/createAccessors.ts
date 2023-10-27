@@ -1,14 +1,50 @@
-import type { RenderResult } from "@testing-library/react";
+import { type RenderResult, within } from "@testing-library/react";
 import { createAccessorsBase } from "./createAccessorsBase";
 import type { AccessorParamsType, AccessorsType } from "./types";
 
-export function createAccessors(
+type CreateAccessorsInternal = (
+	self: CreateAccessorsInternal,
+	qs: RenderResult,
+	params: AccessorParamsType,
+) => AccessorsType;
+
+/**
+ * Provide self as first argument for testing
+ */
+export function createAccessorsInternal(
+	self: CreateAccessorsInternal,
 	qs: RenderResult,
 	params: AccessorParamsType,
 ): AccessorsType {
-	const baseResult = createAccessorsBase(qs, params);
+	const { mapper, parent } = params;
 
-	const { mapper } = params;
+	const getQs = () => {
+		if (parent) {
+			const parentAccessors = self(self, qs, parent);
+
+			const parentElement = parentAccessors.get();
+
+			const parentQs = within(parentElement);
+
+			return parentQs;
+		}
+
+		return qs;
+	};
+
+	const getBaseElement = () => {
+		if (parent) {
+			const parentAccessors = self(self, qs, parent);
+
+			const parentElement = parentAccessors.get();
+
+			return parentElement;
+		}
+
+		return qs.baseElement;
+	};
+
+	const baseResult = createAccessorsBase(getQs, getBaseElement, params);
 
 	if (!mapper) {
 		return baseResult;
@@ -52,4 +88,11 @@ export function createAccessors(
 			return result.map(mapper);
 		},
 	};
+}
+
+export function createAccessors(
+	qs: RenderResult,
+	params: AccessorParamsType,
+): AccessorsType {
+	return createAccessorsInternal(createAccessorsInternal, qs, params);
 }

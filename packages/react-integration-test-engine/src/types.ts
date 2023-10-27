@@ -5,6 +5,58 @@ import type {
 } from "@testing-library/react";
 import type { ReactElement } from "react";
 
+export type QueryKeys =
+	| "getByRole"
+	| "getAllByRole"
+	| "queryAllByRole"
+	| "queryByRole"
+	| "findAllByRole"
+	| "findByRole"
+	| "getAllByLabelText"
+	| "getByLabelText"
+	| "queryAllByLabelText"
+	| "queryByLabelText"
+	| "findAllByLabelText"
+	| "findByLabelText"
+	| "getAllByPlaceholderText"
+	| "getByPlaceholderText"
+	| "queryAllByPlaceholderText"
+	| "queryByPlaceholderText"
+	| "findAllByPlaceholderText"
+	| "findByPlaceholderText"
+	| "getAllByText"
+	| "getByText"
+	| "queryAllByText"
+	| "queryByText"
+	| "findAllByText"
+	| "findByText"
+	| "getAllByDisplayValue"
+	| "getByDisplayValue"
+	| "queryAllByDisplayValue"
+	| "queryByDisplayValue"
+	| "findAllByDisplayValue"
+	| "findByDisplayValue"
+	| "getAllByAltText"
+	| "getByAltText"
+	| "queryAllByAltText"
+	| "queryByAltText"
+	| "findAllByAltText"
+	| "findByAltText"
+	| "getAllByTitle"
+	| "getByTitle"
+	| "queryAllByTitle"
+	| "queryByTitle"
+	| "findAllByTitle"
+	| "findByTitle"
+	| "getAllByTestId"
+	| "getByTestId"
+	| "queryAllByTestId"
+	| "queryByTestId"
+	| "findAllByTestId"
+	| "findByTestId";
+
+export type QueriesType = Pick<RenderResult, QueryKeys>;
+
 /**
  * Type of `testing-library` query + `QuerySelector` for css-selections
  *
@@ -102,6 +154,7 @@ export type AccessorParamsBaseType = Readonly<{
 	 * ```
 	 */
 	mapper?: (targetElement: HTMLElement) => HTMLElement;
+	parent?: AccessorParamsType;
 }>;
 
 export type AccessorParamsType = AccessorParamsBaseType &

@@ -1,4 +1,4 @@
-import { type RenderResult, waitFor } from "@testing-library/react";
+import { waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { createAccessorsBase } from "./createAccessorsBase";
 import { type AccessorParamsType, AccessorQueryType } from "./types";
@@ -9,11 +9,8 @@ const mockedWaitFor = vi.mocked(waitFor);
 const querySelectorAll = vi.fn();
 
 const qs = {
-	baseElement: {
-		querySelectorAll,
-	},
-	getAllByRole: vi.fn(),
 	getByRole: vi.fn(),
+	getAllByRole: vi.fn(),
 	queryAllByRole: vi.fn(),
 	queryByRole: vi.fn(),
 	findAllByRole: vi.fn(),
@@ -62,12 +59,23 @@ const qs = {
 	findByTestId: vi.fn(),
 };
 
+const getQs = vi.fn().mockReturnValue(qs);
+
+const getBaseElement = vi.fn();
+
 beforeEach(() => {
 	Object.entries(qs).forEach(([key, mock]) => {
 		if (typeof mock === "function") {
 			mock.mockReturnValue(`${key} return`);
 		}
 	});
+});
+
+beforeEach(() => {
+	getQs.mockReturnValue(qs);
+	getBaseElement.mockReturnValue({
+		querySelectorAll,
+	} as unknown as HTMLElement);
 });
 
 afterEach(() => {
@@ -84,19 +92,16 @@ describe.each([
 	["Title", AccessorQueryType.Title],
 	["TestId", AccessorQueryType.TestId],
 ])("query type = %s", (queryName, queryType) => {
-	const accessors = createAccessorsBase(
-		qs as unknown as RenderResult,
-		{
-			query: queryType,
-			parameters: [
-				"arg1",
-				{
-					checked: true,
-					pressed: false,
-				},
-			],
-		} as unknown as AccessorParamsType,
-	);
+	const accessors = createAccessorsBase(getQs, getBaseElement, {
+		query: queryType,
+		parameters: [
+			"arg1",
+			{
+				checked: true,
+				pressed: false,
+			},
+		],
+	} as unknown as AccessorParamsType);
 
 	test.each([
 		["getAll"],
@@ -106,17 +111,16 @@ describe.each([
 		["findAll"],
 		["find"],
 	] as const)("accessor key = %s", (accessorKey) => {
+		expect(getQs).toHaveBeenCalledTimes(0);
+
 		const accessor = accessors[accessorKey];
 
 		const functionName = `${accessorKey}By${queryName}`;
 
 		expect(accessor()).toBe(`${functionName} return`);
 
+		expect(getQs).toHaveBeenCalledTimes(1);
 		Object.entries(qs).forEach(([key, mock]) => {
-			if (typeof mock !== "function") {
-				return;
-			}
-
 			if (key === functionName) {
 				expect(mock).toHaveBeenCalledTimes(1);
 				expect(mock).toHaveBeenCalledWith("arg1", {
@@ -133,13 +137,14 @@ describe.each([
 describe("QuerySelector", () => {
 	const selector = "div > span";
 
-	const accessors = createAccessorsBase(qs as unknown as RenderResult, {
+	const accessors = createAccessorsBase(getQs, getBaseElement, {
 		query: AccessorQueryType.QuerySelector,
 		parameters: [selector],
 	});
 
 	describe("get", () => {
 		test("call `querySelectorAll` with correct parameters", () => {
+			expect(getBaseElement).toHaveBeenCalledTimes(0);
 			querySelectorAll.mockReturnValue([document.createElement("div")]);
 
 			accessors.get();
@@ -178,6 +183,7 @@ describe("QuerySelector", () => {
 
 	describe("getAll", () => {
 		test("call `querySelectorAll` with correct parameters", () => {
+			expect(getBaseElement).toHaveBeenCalledTimes(0);
 			querySelectorAll.mockReturnValue([document.createElement("div")]);
 
 			accessors.getAll();
@@ -208,6 +214,7 @@ describe("QuerySelector", () => {
 
 	describe("query", () => {
 		test("call `querySelectorAll` with correct parameters", () => {
+			expect(getBaseElement).toHaveBeenCalledTimes(0);
 			querySelectorAll.mockReturnValue([document.createElement("div")]);
 
 			accessors.query();
@@ -244,6 +251,7 @@ describe("QuerySelector", () => {
 
 	describe("queryAll", () => {
 		test("call `querySelectorAll` with correct parameters", () => {
+			expect(getBaseElement).toHaveBeenCalledTimes(0);
 			querySelectorAll.mockReturnValue([document.createElement("div")]);
 
 			accessors.queryAll();
@@ -272,6 +280,7 @@ describe("QuerySelector", () => {
 
 	describe("find", () => {
 		test("call `waitFor` without parameters", async () => {
+			expect(getBaseElement).toHaveBeenCalledTimes(0);
 			await accessors.find();
 
 			expect(mockedWaitFor.mock.calls[0][1]).toBeFalsy();
@@ -283,7 +292,7 @@ describe("QuerySelector", () => {
 				timeout: 20,
 			};
 
-			await createAccessorsBase(qs as unknown as RenderResult, {
+			await createAccessorsBase(getQs, getBaseElement, {
 				query: AccessorQueryType.QuerySelector,
 				parameters: [
 					selector,
@@ -357,6 +366,7 @@ describe("QuerySelector", () => {
 
 	describe("findAll", () => {
 		test("call `waitFor` without parameters", async () => {
+			expect(getBaseElement).toHaveBeenCalledTimes(0);
 			await accessors.findAll();
 
 			expect(mockedWaitFor.mock.calls[0][1]).toBeFalsy();
@@ -368,7 +378,7 @@ describe("QuerySelector", () => {
 				timeout: 20,
 			};
 
-			await createAccessorsBase(qs as unknown as RenderResult, {
+			await createAccessorsBase(getQs, getBaseElement, {
 				query: AccessorQueryType.QuerySelector,
 				parameters: [
 					selector,
@@ -436,18 +446,15 @@ describe("QuerySelector", () => {
 
 test("throw an error for unknown query", () => {
 	expect(() => {
-		createAccessorsBase(
-			qs as unknown as RenderResult,
-			{
-				query: null,
-				parameters: [
-					"arg1",
-					{
-						checked: true,
-						pressed: false,
-					},
-				],
-			} as unknown as AccessorParamsType,
-		);
+		createAccessorsBase(getQs, getBaseElement, {
+			query: null,
+			parameters: [
+				"arg1",
+				{
+					checked: true,
+					pressed: false,
+				},
+			],
+		} as unknown as AccessorParamsType);
 	}).toThrow();
 });

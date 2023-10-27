@@ -1,8 +1,22 @@
-import type { RenderResult } from "@testing-library/react";
+import { type RenderResult, within } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { createAccessors } from "./createAccessors";
+import { createAccessors, createAccessorsInternal } from "./createAccessors";
 import { createAccessorsBase } from "./createAccessorsBase";
-import { AccessorQueryType, type AccessorsType } from "./types";
+import { AccessorQueryType, type AccessorsType, QueriesType } from "./types";
+
+vi.mock("@testing-library/react");
+
+vi.mock("./createAccessors", async () => {
+	const actual = (await vi.importActual("./createAccessors")) as {
+		createAccessorsInternal: typeof createAccessorsInternal;
+		createAccessors: typeof createAccessors;
+	};
+
+	return {
+		createAccessorsInternal: vi.fn(actual.createAccessorsInternal),
+		createAccessors: vi.fn(actual.createAccessors),
+	};
+});
 
 vi.mock("./createAccessorsBase");
 
@@ -16,10 +30,14 @@ const accessors: AccessorsType = {
 };
 
 const qs = {
+	baseElement: document.createElement("article"),
 	get: vi.fn(),
 } as unknown as RenderResult;
 
+const childCreateAccessors = vi.fn();
+
 afterEach(() => {
+	vi.mocked(createAccessors).mockRestore();
 	vi.clearAllMocks();
 });
 
@@ -33,7 +51,7 @@ describe("without mapper", () => {
 		expect(result).toBe(accessors);
 
 		expect(createAccessorsBase).toHaveBeenCalledTimes(1);
-		expect(createAccessorsBase).toHaveBeenCalledWith(qs, {
+		expect(vi.mocked(createAccessorsBase).mock.calls[0][2]).toEqual({
 			query: AccessorQueryType.AltText,
 			parameters: ["test"],
 		});
@@ -54,7 +72,7 @@ describe("with mapper", () => {
 	});
 
 	expect(createAccessorsBase).toHaveBeenCalledTimes(1);
-	expect(createAccessorsBase).toHaveBeenCalledWith(qs, {
+	expect(vi.mocked(createAccessorsBase).mock.calls[0][2]).toEqual({
 		query: AccessorQueryType.AltText,
 		parameters: ["test"],
 		mapper,
@@ -189,5 +207,120 @@ describe("with mapper", () => {
 		expect(mapper).toHaveBeenCalledTimes(2);
 		expect(mapper.mock.calls[0][0]).toBe(originalElement1);
 		expect(mapper.mock.calls[1][0]).toBe(originalElement2);
+	});
+});
+
+describe("getQs", () => {
+	const getQs = () => vi.mocked(createAccessorsBase).mock.calls[0][0]();
+
+	test("return original `qs` if `parent` is not provided", () => {
+		createAccessorsInternal(childCreateAccessors, qs, {
+			query: AccessorQueryType.AltText,
+			parameters: ["test"],
+		});
+
+		expect(getQs()).toBe(qs);
+
+		expect(childCreateAccessors).toHaveBeenCalledTimes(0);
+	});
+
+	test("return `qs` of parent", () => {
+		const parentElement = document.createElement("main");
+
+		const parentAccessors: AccessorsType = {
+			find: vi.fn(),
+			findAll: vi.fn(),
+			get: vi.fn().mockReturnValue(parentElement),
+			getAll: vi.fn(),
+			query: vi.fn(),
+			queryAll: vi.fn(),
+		};
+
+		createAccessorsInternal(childCreateAccessors, qs, {
+			query: AccessorQueryType.AltText,
+			parameters: ["test"],
+			parent: {
+				query: AccessorQueryType.Role,
+				parameters: ["testRole"],
+			},
+		});
+
+		const parentQs = {
+			findAllByAltText: vi.fn(),
+		} as unknown as QueriesType;
+
+		vi.mocked(within).mockReturnValue(parentQs);
+
+		vi.mocked(childCreateAccessors).mockReturnValue(parentAccessors);
+
+		expect(getQs()).toBe(parentQs);
+
+		expect(within).toHaveBeenCalledTimes(1);
+		expect(within).toHaveBeenCalledWith(parentElement);
+
+		expect(childCreateAccessors).toHaveBeenCalledTimes(1);
+		expect(childCreateAccessors).toHaveBeenCalledWith(
+			childCreateAccessors,
+			qs,
+			{
+				query: AccessorQueryType.Role,
+				parameters: ["testRole"],
+			},
+		);
+	});
+});
+
+describe("getBaseElement", () => {
+	const getBaseElement = () =>
+		vi.mocked(createAccessorsBase).mock.calls[0][1]();
+
+	test.todo(
+		"return `baseElement` from original `qs` if `parent` is not provided",
+		() => {
+			createAccessorsInternal(childCreateAccessors, qs, {
+				query: AccessorQueryType.AltText,
+				parameters: ["test"],
+			});
+
+			expect(getBaseElement()).toBe(qs.baseElement);
+
+			expect(childCreateAccessors).toHaveBeenCalledTimes(0);
+		},
+	);
+
+	test("return `baseElement` from result of `get` of parent accessors", () => {
+		const parentElement = document.createElement("main");
+
+		const parentAccessors: AccessorsType = {
+			find: vi.fn(),
+			findAll: vi.fn(),
+			get: vi.fn().mockReturnValue(parentElement),
+			getAll: vi.fn(),
+			query: vi.fn(),
+			queryAll: vi.fn(),
+		};
+
+		createAccessorsInternal(childCreateAccessors, qs, {
+			query: AccessorQueryType.AltText,
+			parameters: ["test"],
+			parent: {
+				query: AccessorQueryType.Role,
+				parameters: ["testRole"],
+			},
+		});
+
+		vi.mocked(childCreateAccessors).mockReturnValue(parentAccessors);
+
+		expect(getBaseElement()).toBe(parentElement);
+
+		expect(childCreateAccessors).toHaveBeenCalledTimes(1);
+		expect(childCreateAccessors).toHaveBeenCalledWith(
+			childCreateAccessors,
+			qs,
+			{
+				query: AccessorQueryType.Role,
+				parameters: ["testRole"],
+			},
+		);
 	});
 });
