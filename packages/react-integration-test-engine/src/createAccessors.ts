@@ -1,6 +1,6 @@
 import { type RenderResult, within } from "@testing-library/react";
 import { createAccessorsBase } from "./createAccessorsBase";
-import type { AccessorParamsType, AccessorsType } from "./types";
+import type { AccessorParamsType, AccessorsType, QueriesType } from "./types";
 
 type CreateAccessorsInternal = (
 	self: CreateAccessorsInternal,
@@ -18,11 +18,19 @@ export function createAccessorsInternal(
 ): AccessorsType {
 	const { mapper, parent } = params;
 
-	const getQs = () => {
+	const queryQs = <Required extends boolean>(
+		required: Required,
+	): Required extends true ? QueriesType : QueriesType | null => {
 		if (parent) {
 			const parentAccessors = self(self, qs, parent);
 
-			const parentElement = parentAccessors.get();
+			const parentElement = required
+				? parentAccessors.get()
+				: parentAccessors.query();
+
+			if (!parentElement) {
+				return null as Required extends true ? QueriesType : QueriesType | null;
+			}
 
 			const parentQs = within(parentElement);
 
@@ -32,19 +40,25 @@ export function createAccessorsInternal(
 		return qs;
 	};
 
-	const getBaseElement = () => {
+	const queryBaseElement = <Required extends boolean>(
+		required: Required,
+	): Required extends true ? HTMLElement : HTMLElement | null => {
 		if (parent) {
 			const parentAccessors = self(self, qs, parent);
 
-			const parentElement = parentAccessors.get();
+			const parentElement = required
+				? parentAccessors.get()
+				: parentAccessors.query();
 
-			return parentElement;
+			return parentElement as Required extends true
+				? HTMLElement
+				: HTMLElement | null;
 		}
 
 		return qs.baseElement;
 	};
 
-	const baseResult = createAccessorsBase(getQs, getBaseElement, params);
+	const baseResult = createAccessorsBase(queryQs, queryBaseElement, params);
 
 	if (!mapper) {
 		return baseResult;

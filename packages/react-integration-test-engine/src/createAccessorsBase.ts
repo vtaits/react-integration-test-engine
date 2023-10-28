@@ -7,24 +7,44 @@ import {
 } from "./types";
 
 export function createAccessorsBase(
-	getQs: () => QueriesType,
-	getBaseElement: () => HTMLElement,
+	queryQs: <Required extends boolean>(
+		required: Required,
+	) => Required extends true ? QueriesType : QueriesType | null,
+	queryBaseElement: <Required extends boolean>(
+		required: Required,
+	) => Required extends true ? HTMLElement : HTMLElement | null,
 	params: AccessorParamsType,
 ): AccessorsType {
 	switch (params.query) {
 		case AccessorQueryType.Role:
 			return {
-				getAll: () => getQs().getAllByRole(...params.parameters),
-				get: () => getQs().getByRole(...params.parameters),
-				queryAll: () => getQs().queryAllByRole(...params.parameters),
-				query: () => getQs().queryByRole(...params.parameters),
+				getAll: () => queryQs(true).getAllByRole(...params.parameters),
+				get: () => queryQs(true).getByRole(...params.parameters),
+				queryAll: () => {
+					const qs = queryQs(false);
+
+					if (!qs) {
+						return [];
+					}
+
+					return qs.queryAllByRole(...params.parameters);
+				},
+				query: () => {
+					const qs = queryQs(false);
+
+					if (!qs) {
+						return null;
+					}
+
+					return qs.queryByRole(...params.parameters);
+				},
 				findAll: async () => {
-					const qs = await waitFor(getQs);
+					const qs = await waitFor(() => queryQs(true));
 
 					return qs.findAllByRole(...params.parameters);
 				},
 				find: async () => {
-					const qs = await waitFor(getQs);
+					const qs = await waitFor(() => queryQs(true));
 
 					return qs.findByRole(...params.parameters);
 				},
@@ -32,17 +52,33 @@ export function createAccessorsBase(
 
 		case AccessorQueryType.LabelText:
 			return {
-				getAll: () => getQs().getAllByLabelText(...params.parameters),
-				get: () => getQs().getByLabelText(...params.parameters),
-				queryAll: () => getQs().queryAllByLabelText(...params.parameters),
-				query: () => getQs().queryByLabelText(...params.parameters),
+				getAll: () => queryQs(true).getAllByLabelText(...params.parameters),
+				get: () => queryQs(true).getByLabelText(...params.parameters),
+				queryAll: () => {
+					const qs = queryQs(false);
+
+					if (!qs) {
+						return [];
+					}
+
+					return qs.queryAllByLabelText(...params.parameters);
+				},
+				query: () => {
+					const qs = queryQs(false);
+
+					if (!qs) {
+						return null;
+					}
+
+					return qs.queryByLabelText(...params.parameters);
+				},
 				findAll: async () => {
-					const qs = await waitFor(getQs);
+					const qs = await waitFor(() => queryQs(true));
 
 					return qs.findAllByLabelText(...params.parameters);
 				},
 				find: async () => {
-					const qs = await waitFor(getQs);
+					const qs = await waitFor(() => queryQs(true));
 
 					return qs.findByLabelText(...params.parameters);
 				},
@@ -50,17 +86,34 @@ export function createAccessorsBase(
 
 		case AccessorQueryType.PlaceholderText:
 			return {
-				getAll: () => getQs().getAllByPlaceholderText(...params.parameters),
-				get: () => getQs().getByPlaceholderText(...params.parameters),
-				queryAll: () => getQs().queryAllByPlaceholderText(...params.parameters),
-				query: () => getQs().queryByPlaceholderText(...params.parameters),
+				getAll: () =>
+					queryQs(true).getAllByPlaceholderText(...params.parameters),
+				get: () => queryQs(true).getByPlaceholderText(...params.parameters),
+				queryAll: () => {
+					const qs = queryQs(false);
+
+					if (!qs) {
+						return [];
+					}
+
+					return qs.queryAllByPlaceholderText(...params.parameters);
+				},
+				query: () => {
+					const qs = queryQs(false);
+
+					if (!qs) {
+						return null;
+					}
+
+					return qs.queryByPlaceholderText(...params.parameters);
+				},
 				findAll: async () => {
-					const qs = await waitFor(getQs);
+					const qs = await waitFor(() => queryQs(true));
 
 					return qs.findAllByPlaceholderText(...params.parameters);
 				},
 				find: async () => {
-					const qs = await waitFor(getQs);
+					const qs = await waitFor(() => queryQs(true));
 
 					return qs.findByPlaceholderText(...params.parameters);
 				},
@@ -68,17 +121,33 @@ export function createAccessorsBase(
 
 		case AccessorQueryType.Text:
 			return {
-				getAll: () => getQs().getAllByText(...params.parameters),
-				get: () => getQs().getByText(...params.parameters),
-				queryAll: () => getQs().queryAllByText(...params.parameters),
-				query: () => getQs().queryByText(...params.parameters),
+				getAll: () => queryQs(true).getAllByText(...params.parameters),
+				get: () => queryQs(true).getByText(...params.parameters),
+				queryAll: () => {
+					const qs = queryQs(false);
+
+					if (!qs) {
+						return [];
+					}
+
+					return qs.queryAllByText(...params.parameters);
+				},
+				query: () => {
+					const qs = queryQs(false);
+
+					if (!qs) {
+						return null;
+					}
+
+					return qs.queryByText(...params.parameters);
+				},
 				findAll: async () => {
-					const qs = await waitFor(getQs);
+					const qs = await waitFor(() => queryQs(true));
 
 					return qs.findAllByText(...params.parameters);
 				},
 				find: async () => {
-					const qs = await waitFor(getQs);
+					const qs = await waitFor(() => queryQs(true));
 
 					return qs.findByText(...params.parameters);
 				},
@@ -86,17 +155,33 @@ export function createAccessorsBase(
 
 		case AccessorQueryType.DisplayValue:
 			return {
-				getAll: () => getQs().getAllByDisplayValue(...params.parameters),
-				get: () => getQs().getByDisplayValue(...params.parameters),
-				queryAll: () => getQs().queryAllByDisplayValue(...params.parameters),
-				query: () => getQs().queryByDisplayValue(...params.parameters),
+				getAll: () => queryQs(true).getAllByDisplayValue(...params.parameters),
+				get: () => queryQs(true).getByDisplayValue(...params.parameters),
+				queryAll: () => {
+					const qs = queryQs(false);
+
+					if (!qs) {
+						return [];
+					}
+
+					return qs.queryAllByDisplayValue(...params.parameters);
+				},
+				query: () => {
+					const qs = queryQs(false);
+
+					if (!qs) {
+						return null;
+					}
+
+					return qs.queryByDisplayValue(...params.parameters);
+				},
 				findAll: async () => {
-					const qs = await waitFor(getQs);
+					const qs = await waitFor(() => queryQs(true));
 
 					return qs.findAllByDisplayValue(...params.parameters);
 				},
 				find: async () => {
-					const qs = await waitFor(getQs);
+					const qs = await waitFor(() => queryQs(true));
 
 					return qs.findByDisplayValue(...params.parameters);
 				},
@@ -104,17 +189,33 @@ export function createAccessorsBase(
 
 		case AccessorQueryType.AltText:
 			return {
-				getAll: () => getQs().getAllByAltText(...params.parameters),
-				get: () => getQs().getByAltText(...params.parameters),
-				queryAll: () => getQs().queryAllByAltText(...params.parameters),
-				query: () => getQs().queryByAltText(...params.parameters),
+				getAll: () => queryQs(true).getAllByAltText(...params.parameters),
+				get: () => queryQs(true).getByAltText(...params.parameters),
+				queryAll: () => {
+					const qs = queryQs(false);
+
+					if (!qs) {
+						return [];
+					}
+
+					return qs.queryAllByAltText(...params.parameters);
+				},
+				query: () => {
+					const qs = queryQs(false);
+
+					if (!qs) {
+						return null;
+					}
+
+					return qs.queryByAltText(...params.parameters);
+				},
 				findAll: async () => {
-					const qs = await waitFor(getQs);
+					const qs = await waitFor(() => queryQs(true));
 
 					return qs.findAllByAltText(...params.parameters);
 				},
 				find: async () => {
-					const qs = await waitFor(getQs);
+					const qs = await waitFor(() => queryQs(true));
 
 					return qs.findByAltText(...params.parameters);
 				},
@@ -122,17 +223,33 @@ export function createAccessorsBase(
 
 		case AccessorQueryType.Title:
 			return {
-				getAll: () => getQs().getAllByTitle(...params.parameters),
-				get: () => getQs().getByTitle(...params.parameters),
-				queryAll: () => getQs().queryAllByTitle(...params.parameters),
-				query: () => getQs().queryByTitle(...params.parameters),
+				getAll: () => queryQs(true).getAllByTitle(...params.parameters),
+				get: () => queryQs(true).getByTitle(...params.parameters),
+				queryAll: () => {
+					const qs = queryQs(false);
+
+					if (!qs) {
+						return [];
+					}
+
+					return qs.queryAllByTitle(...params.parameters);
+				},
+				query: () => {
+					const qs = queryQs(false);
+
+					if (!qs) {
+						return null;
+					}
+
+					return qs.queryByTitle(...params.parameters);
+				},
 				findAll: async () => {
-					const qs = await waitFor(getQs);
+					const qs = await waitFor(() => queryQs(true));
 
 					return qs.findAllByTitle(...params.parameters);
 				},
 				find: async () => {
-					const qs = await waitFor(getQs);
+					const qs = await waitFor(() => queryQs(true));
 
 					return qs.findByTitle(...params.parameters);
 				},
@@ -140,17 +257,33 @@ export function createAccessorsBase(
 
 		case AccessorQueryType.TestId:
 			return {
-				getAll: () => getQs().getAllByTestId(...params.parameters),
-				get: () => getQs().getByTestId(...params.parameters),
-				queryAll: () => getQs().queryAllByTestId(...params.parameters),
-				query: () => getQs().queryByTestId(...params.parameters),
+				getAll: () => queryQs(true).getAllByTestId(...params.parameters),
+				get: () => queryQs(true).getByTestId(...params.parameters),
+				queryAll: () => {
+					const qs = queryQs(false);
+
+					if (!qs) {
+						return [];
+					}
+
+					return qs.queryAllByTestId(...params.parameters);
+				},
+				query: () => {
+					const qs = queryQs(false);
+
+					if (!qs) {
+						return null;
+					}
+
+					return qs.queryByTestId(...params.parameters);
+				},
 				findAll: async () => {
-					const qs = await waitFor(getQs);
+					const qs = await waitFor(() => queryQs(true));
 
 					return qs.findAllByTestId(...params.parameters);
 				},
 				find: async () => {
-					const qs = await waitFor(getQs);
+					const qs = await waitFor(() => queryQs(true));
 
 					return qs.findByTestId(...params.parameters);
 				},
@@ -161,7 +294,7 @@ export function createAccessorsBase(
 
 			return {
 				getAll: () => {
-					const result = getBaseElement().querySelectorAll(selector);
+					const result = queryBaseElement(true).querySelectorAll(selector);
 
 					if (result.length === 0) {
 						throw new Error(
@@ -173,7 +306,7 @@ export function createAccessorsBase(
 				},
 
 				get: () => {
-					const result = getBaseElement().querySelectorAll(selector);
+					const result = queryBaseElement(true).querySelectorAll(selector);
 
 					if (result.length === 0) {
 						throw new Error(
@@ -191,13 +324,25 @@ export function createAccessorsBase(
 				},
 
 				queryAll: () => {
-					const result = getBaseElement().querySelectorAll(selector);
+					const baseElement = queryBaseElement(false);
+
+					if (!baseElement) {
+						return [];
+					}
+
+					const result = baseElement.querySelectorAll(selector);
 
 					return [...result] as HTMLElement[];
 				},
 
 				query: () => {
-					const result = getBaseElement().querySelectorAll(selector);
+					const baseElement = queryBaseElement(false);
+
+					if (!baseElement) {
+						return null;
+					}
+
+					const result = baseElement.querySelectorAll(selector);
 
 					if (result.length === 0) {
 						return null;
@@ -216,7 +361,8 @@ export function createAccessorsBase(
 					const waitForElementOptions = options?.waitForElementOptions;
 
 					const result = await waitFor(() => {
-						const iterResult = getBaseElement().querySelectorAll(selector);
+						const iterResult =
+							queryBaseElement(true).querySelectorAll(selector);
 
 						if (iterResult.length === 0) {
 							throw new Error(
@@ -234,7 +380,8 @@ export function createAccessorsBase(
 					const waitForElementOptions = options?.waitForElementOptions;
 
 					const result = await waitFor(() => {
-						const iterResult = getBaseElement().querySelectorAll(selector);
+						const iterResult =
+							queryBaseElement(true).querySelectorAll(selector);
 
 						if (iterResult.length === 0) {
 							throw new Error(

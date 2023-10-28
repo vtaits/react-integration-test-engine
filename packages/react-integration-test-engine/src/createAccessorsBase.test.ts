@@ -59,9 +59,9 @@ const qs = {
 	findByTestId: vi.fn(),
 };
 
-const getQs = vi.fn().mockReturnValue(qs);
+const queryQs = vi.fn().mockReturnValue(qs);
 
-const getBaseElement = vi.fn();
+const queryBaseElement = vi.fn();
 
 beforeEach(() => {
 	Object.entries(qs).forEach(([key, mock]) => {
@@ -72,8 +72,8 @@ beforeEach(() => {
 });
 
 beforeEach(() => {
-	getQs.mockReturnValue(qs);
-	getBaseElement.mockReturnValue({
+	queryQs.mockReturnValue(qs);
+	queryBaseElement.mockReturnValue({
 		querySelectorAll,
 	} as unknown as HTMLElement);
 });
@@ -92,7 +92,7 @@ describe.each([
 	["Title", AccessorQueryType.Title],
 	["TestId", AccessorQueryType.TestId],
 ])("query type = %s", (queryName, queryType) => {
-	const accessors = createAccessorsBase(getQs, getBaseElement, {
+	const accessors = createAccessorsBase(queryQs, queryBaseElement, {
 		query: queryType,
 		parameters: [
 			"arg1",
@@ -103,10 +103,10 @@ describe.each([
 		],
 	} as unknown as AccessorParamsType);
 
-	test.each([["getAll"], ["get"], ["queryAll"], ["query"]] as const)(
+	test.each([["getAll"], ["get"]] as const)(
 		"accessor key = %s",
 		(accessorKey) => {
-			expect(getQs).toHaveBeenCalledTimes(0);
+			expect(queryQs).toHaveBeenCalledTimes(0);
 
 			const accessor = accessors[accessorKey];
 
@@ -114,7 +114,9 @@ describe.each([
 
 			expect(accessor()).toBe(`${functionName} return`);
 
-			expect(getQs).toHaveBeenCalledTimes(1);
+			expect(queryQs).toHaveBeenCalledTimes(1);
+			expect(queryQs).toHaveBeenCalledWith(true);
+
 			Object.entries(qs).forEach(([key, mock]) => {
 				if (key === functionName) {
 					expect(mock).toHaveBeenCalledTimes(1);
@@ -129,11 +131,58 @@ describe.each([
 		},
 	);
 
+	describe.each([
+		["queryAll", []],
+		["query", null],
+	] as const)("accessor key = %s", (accessorKey, emptyValue) => {
+		test("return empty value if `qs` is not found", () => {
+			expect(queryQs).toHaveBeenCalledTimes(0);
+
+			queryQs.mockReturnValueOnce(null);
+
+			const accessor = accessors[accessorKey];
+
+			expect(accessor()).toEqual(emptyValue);
+
+			expect(queryQs).toHaveBeenCalledTimes(1);
+			expect(queryQs).toHaveBeenCalledWith(false);
+
+			Object.entries(qs).forEach(([, mock]) => {
+				expect(mock).toHaveBeenCalledTimes(0);
+			});
+		});
+
+		test("return result of corresponding function", () => {
+			expect(queryQs).toHaveBeenCalledTimes(0);
+
+			const accessor = accessors[accessorKey];
+
+			const functionName = `${accessorKey}By${queryName}`;
+
+			expect(accessor()).toBe(`${functionName} return`);
+
+			expect(queryQs).toHaveBeenCalledTimes(1);
+			expect(queryQs).toHaveBeenCalledWith(false);
+
+			Object.entries(qs).forEach(([key, mock]) => {
+				if (key === functionName) {
+					expect(mock).toHaveBeenCalledTimes(1);
+					expect(mock).toHaveBeenCalledWith("arg1", {
+						checked: true,
+						pressed: false,
+					});
+				} else {
+					expect(mock).toHaveBeenCalledTimes(0);
+				}
+			});
+		});
+	});
+
 	test.each([["findAll"], ["find"]] as const)(
 		"accessor key = %s",
 		async (accessorKey) => {
 			vi.mocked(waitFor).mockResolvedValue(qs);
-			expect(getQs).toHaveBeenCalledTimes(0);
+			expect(queryQs).toHaveBeenCalledTimes(0);
 
 			const accessor = accessors[accessorKey];
 
@@ -144,7 +193,7 @@ describe.each([
 			expect(accessorResult).toBe(`${functionName} return`);
 
 			expect(waitFor).toHaveBeenCalledTimes(1);
-			expect(waitFor).toHaveBeenCalledWith(getQs);
+
 			Object.entries(qs).forEach(([key, mock]) => {
 				if (key === functionName) {
 					expect(mock).toHaveBeenCalledTimes(1);
@@ -156,6 +205,15 @@ describe.each([
 					expect(mock).toHaveBeenCalledTimes(0);
 				}
 			});
+
+			expect(queryQs).toHaveBeenCalledTimes(0);
+
+			const qsResult = vi.mocked(waitFor).mock.calls[0][0]();
+
+			expect(qsResult).toBe(qs);
+
+			expect(queryQs).toHaveBeenCalledTimes(1);
+			expect(queryQs).toHaveBeenCalledWith(true);
 		},
 	);
 });
@@ -163,17 +221,20 @@ describe.each([
 describe("QuerySelector", () => {
 	const selector = "div > span";
 
-	const accessors = createAccessorsBase(getQs, getBaseElement, {
+	const accessors = createAccessorsBase(queryQs, queryBaseElement, {
 		query: AccessorQueryType.QuerySelector,
 		parameters: [selector],
 	});
 
 	describe("get", () => {
 		test("call `querySelectorAll` with correct parameters", () => {
-			expect(getBaseElement).toHaveBeenCalledTimes(0);
+			expect(queryBaseElement).toHaveBeenCalledTimes(0);
 			querySelectorAll.mockReturnValue([document.createElement("div")]);
 
 			accessors.get();
+
+			expect(queryBaseElement).toHaveBeenCalledTimes(1);
+			expect(queryBaseElement).toHaveBeenCalledWith(true);
 
 			expect(querySelectorAll).toHaveBeenCalledTimes(1);
 			expect(querySelectorAll).toHaveBeenCalledWith(selector);
@@ -209,10 +270,13 @@ describe("QuerySelector", () => {
 
 	describe("getAll", () => {
 		test("call `querySelectorAll` with correct parameters", () => {
-			expect(getBaseElement).toHaveBeenCalledTimes(0);
+			expect(queryBaseElement).toHaveBeenCalledTimes(0);
 			querySelectorAll.mockReturnValue([document.createElement("div")]);
 
 			accessors.getAll();
+
+			expect(queryBaseElement).toHaveBeenCalledTimes(1);
+			expect(queryBaseElement).toHaveBeenCalledWith(true);
 
 			expect(querySelectorAll).toHaveBeenCalledTimes(1);
 			expect(querySelectorAll).toHaveBeenCalledWith(selector);
@@ -240,10 +304,13 @@ describe("QuerySelector", () => {
 
 	describe("query", () => {
 		test("call `querySelectorAll` with correct parameters", () => {
-			expect(getBaseElement).toHaveBeenCalledTimes(0);
+			expect(queryBaseElement).toHaveBeenCalledTimes(0);
 			querySelectorAll.mockReturnValue([document.createElement("div")]);
 
 			accessors.query();
+
+			expect(queryBaseElement).toHaveBeenCalledTimes(1);
+			expect(queryBaseElement).toHaveBeenCalledWith(false);
 
 			expect(querySelectorAll).toHaveBeenCalledTimes(1);
 			expect(querySelectorAll).toHaveBeenCalledWith(selector);
@@ -258,6 +325,14 @@ describe("QuerySelector", () => {
 			expect(() => {
 				accessors.query();
 			}).toThrow();
+		});
+
+		test("return `null` if base element is not found", () => {
+			queryBaseElement.mockReturnValueOnce(null);
+
+			expect(accessors.query()).toBe(null);
+
+			expect(querySelectorAll).toHaveBeenCalledTimes(0);
 		});
 
 		test("return `null` if there are no mathed elements", () => {
@@ -277,13 +352,24 @@ describe("QuerySelector", () => {
 
 	describe("queryAll", () => {
 		test("call `querySelectorAll` with correct parameters", () => {
-			expect(getBaseElement).toHaveBeenCalledTimes(0);
+			expect(queryBaseElement).toHaveBeenCalledTimes(0);
 			querySelectorAll.mockReturnValue([document.createElement("div")]);
 
 			accessors.queryAll();
 
+			expect(queryBaseElement).toHaveBeenCalledTimes(1);
+			expect(queryBaseElement).toHaveBeenCalledWith(false);
+
 			expect(querySelectorAll).toHaveBeenCalledTimes(1);
 			expect(querySelectorAll).toHaveBeenCalledWith(selector);
+		});
+
+		test("return an empty array if base element is not found", () => {
+			queryBaseElement.mockReturnValueOnce(null);
+
+			expect(accessors.queryAll()).toEqual([]);
+
+			expect(querySelectorAll).toHaveBeenCalledTimes(0);
 		});
 
 		test("return an empty array if there are no mathed elements", () => {
@@ -306,7 +392,7 @@ describe("QuerySelector", () => {
 
 	describe("find", () => {
 		test("call `waitFor` without parameters", async () => {
-			expect(getBaseElement).toHaveBeenCalledTimes(0);
+			expect(queryBaseElement).toHaveBeenCalledTimes(0);
 			await accessors.find();
 
 			expect(mockedWaitFor.mock.calls[0][1]).toBeFalsy();
@@ -318,7 +404,7 @@ describe("QuerySelector", () => {
 				timeout: 20,
 			};
 
-			await createAccessorsBase(getQs, getBaseElement, {
+			await createAccessorsBase(queryQs, queryBaseElement, {
 				query: AccessorQueryType.QuerySelector,
 				parameters: [
 					selector,
@@ -351,6 +437,9 @@ describe("QuerySelector", () => {
 			await accessors.find();
 
 			mockedWaitFor.mock.calls[0][0]();
+
+			expect(queryBaseElement).toHaveBeenCalledTimes(1);
+			expect(queryBaseElement).toHaveBeenCalledWith(true);
 
 			expect(querySelectorAll).toHaveBeenCalledTimes(1);
 			expect(querySelectorAll).toHaveBeenCalledWith(selector);
@@ -392,7 +481,7 @@ describe("QuerySelector", () => {
 
 	describe("findAll", () => {
 		test("call `waitFor` without parameters", async () => {
-			expect(getBaseElement).toHaveBeenCalledTimes(0);
+			expect(queryBaseElement).toHaveBeenCalledTimes(0);
 			await accessors.findAll();
 
 			expect(mockedWaitFor.mock.calls[0][1]).toBeFalsy();
@@ -404,7 +493,7 @@ describe("QuerySelector", () => {
 				timeout: 20,
 			};
 
-			await createAccessorsBase(getQs, getBaseElement, {
+			await createAccessorsBase(queryQs, queryBaseElement, {
 				query: AccessorQueryType.QuerySelector,
 				parameters: [
 					selector,
@@ -441,6 +530,9 @@ describe("QuerySelector", () => {
 
 			mockedWaitFor.mock.calls[0][0]();
 
+			expect(queryBaseElement).toHaveBeenCalledTimes(1);
+			expect(queryBaseElement).toHaveBeenCalledWith(true);
+
 			expect(querySelectorAll).toHaveBeenCalledTimes(1);
 			expect(querySelectorAll).toHaveBeenCalledWith(selector);
 		});
@@ -472,7 +564,7 @@ describe("QuerySelector", () => {
 
 test("throw an error for unknown query", () => {
 	expect(() => {
-		createAccessorsBase(getQs, getBaseElement, {
+		createAccessorsBase(queryQs, queryBaseElement, {
 			query: null,
 			parameters: [
 				"arg1",

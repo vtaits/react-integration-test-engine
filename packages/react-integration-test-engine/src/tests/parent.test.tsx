@@ -54,6 +54,15 @@ const render = create(
 				},
 			},
 
+			label3: {
+				query: AccessorQueryType.LabelText,
+				parameters: ["testLabel"],
+				parent: {
+					query: AccessorQueryType.LabelText,
+					parameters: ["wrapper3"],
+				},
+			},
+
 			querySelector1: {
 				query: AccessorQueryType.QuerySelector,
 				parameters: ['[aria-label="testLabel"]'],
@@ -71,6 +80,15 @@ const render = create(
 					parameters: ['[aria-label="wrapper2"]'],
 				},
 			},
+
+			querySelector3: {
+				query: AccessorQueryType.QuerySelector,
+				parameters: ['[aria-label="testLabel"]'],
+				parent: {
+					query: AccessorQueryType.QuerySelector,
+					parameters: ['[aria-label="wrapper3"]'],
+				},
+			},
 		},
 	},
 );
@@ -84,6 +102,7 @@ test("semantic queries", () => {
 
 	expect(engine.accessors.label1.get().textContent).toBe("Content 1");
 	expect(engine.accessors.label2.get().textContent).toBe("Content 2");
+	expect(engine.accessors.label3.query()).toBeFalsy();
 });
 
 test("querySelector", () => {
@@ -91,4 +110,5 @@ test("querySelector", () => {
 
 	expect(engine.accessors.querySelector1.get().textContent).toBe("Content 1");
 	expect(engine.accessors.querySelector2.get().textContent).toBe("Content 2");
+	expect(engine.accessors.querySelector3.query()).toBeFalsy();
 });
