@@ -321,7 +321,7 @@ export type OptionsType<
 		[Key in keyof Wrappers]: Parameters<Wrappers[Key]>[1];
 	};
 	/**
-	 * An object whose values is tupples of keys of queries and names of events
+	 * An object whose values are tupples of keys of queries and names of events
 	 *
 	 * ```
 	 * const render = create(Component, defaultProps, {
@@ -343,6 +343,56 @@ export type OptionsType<
 	 * ```
 	 */
 	fireEvents?: FireEvents;
+	/**
+	 * An object whose values are tupples of keys of queries and scenario functions.
+	 * Scenario function is an asynchronous function whose first argument is the result
+	 * of call `get` accessor of the query, and other arguments should be provided in the call of `run` function.
+	 * Unlike the `fireEvents`, multiple events can be fired in one scenario. It can be useful for selecting of values
+	 * in dropdowns and date pickers
+	 *
+	 * Example for `react-datepicker@4.21.0`
+	 *
+	 * ```
+	 * const render = create(Component, defaultProps, {
+	 *   queries: {
+	 *     dateInput: {
+	 *       query: AccessorQueryType.QuerySelector,
+	 *       parameters: [".react-datepicker__input-container input"],
+	 *     },
+	 *   },
+	 *
+	 *   scenarios: {
+	 *     changeDatepicker: [
+	 *       "dateInput",
+	 *       async (element, day: number) => {
+	 *         act(() => {
+	 *           fireEvent.focus(element);
+	 *         });
+	 *
+	 *         const listbox = await screen.findByRole("listbox");
+	 *
+	 *         const dayButton = within(listbox).getByText(`${day}`, {
+	 *           ignore: ".react-datepicker__day--outside-month",
+	 *         });
+	 *
+	 *         act(() => {
+	 *           fireEvent.click(dayButton);
+	 *         });
+	 *       },
+	 *     ],
+	 *   },
+	 * });
+	 *
+	 * const engine = render({});
+	 *
+	 * await engine.run("changeDatepicker", 1);
+	 *
+	 * expect(engine.accessors.dateInput.get()).toHaveProperty(
+	 *   "value",
+	 *   "10/01/2023",
+	 * );
+	 * ```
+	 */
 	scenarios?: Scenarios;
 }>;
 
@@ -463,6 +513,11 @@ export type EngineType<
 	 */
 	// biome-ignore lint/complexity/noBannedTypes: the format of `@testing-library/react`
 	fireEvent: (eventKey: keyof FireEvents, options?: {} | undefined) => void;
+	/**
+	 * Run scenario by key, see `scenarios` property of options
+	 * @param scenarioKey key of `scenarios` option
+	 * @param args scenario arguments
+	 */
 	run: <Key extends keyof Scenarios>(
 		scenarioKey: Key,
 		...args: RunScenatioParameters<Scenarios[Key][1]>

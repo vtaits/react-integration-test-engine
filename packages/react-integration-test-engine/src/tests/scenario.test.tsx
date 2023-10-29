@@ -1,33 +1,30 @@
-import { act, cleanup, fireEvent, screen } from "@testing-library/react";
+import {
+	act,
+	cleanup,
+	fireEvent,
+	screen,
+	within,
+} from "@testing-library/react";
 import { type ReactElement, useState } from "react";
+import ReactDatePicker from "react-datepicker";
 import { afterEach, expect, test } from "vitest";
 import { AccessorQueryType, create } from "..";
 
 function Component(): ReactElement {
 	const [value, setValue] = useState("");
-	const [isOpen, setIsOpen] = useState(false);
+	const [date, setDate] = useState<Date | null>(() => new Date(2023, 9, 20));
 
 	return (
 		<>
 			<input
+				className="simple"
 				value={value}
 				onChange={(event) => {
 					setValue(event.target.value);
 				}}
 			/>
 
-			<button
-				type="button"
-				onClick={() => {
-					setTimeout(() => {
-						setIsOpen(true);
-					}, 1000);
-				}}
-			>
-				Open dialog
-			</button>
-
-			{isOpen && <div role="dialog">Dialog</div>}
+			<ReactDatePicker selected={date} onChange={setDate} />
 		</>
 	);
 }
@@ -37,14 +34,14 @@ const render = create(
 	{},
 	{
 		queries: {
-			dialogButton: {
-				query: AccessorQueryType.Text,
-				parameters: ["Open dialog"],
+			dateInput: {
+				query: AccessorQueryType.QuerySelector,
+				parameters: [".react-datepicker__input-container input"],
 			},
 
 			input: {
 				query: AccessorQueryType.QuerySelector,
-				parameters: ["input"],
+				parameters: ["input.simple"],
 			},
 		},
 
@@ -64,15 +61,21 @@ const render = create(
 				},
 			],
 
-			openDialog: [
-				"dialogButton",
-				async (element) => {
+			changeDatepicker: [
+				"dateInput",
+				async (element, day: number) => {
 					act(() => {
-						fireEvent.click(element);
+						fireEvent.focus(element);
 					});
 
-					await screen.findByRole("dialog", undefined, {
-						timeout: 1000,
+					const listbox = await screen.findByRole("listbox");
+
+					const dayButton = within(listbox).getByText(`${day}`, {
+						ignore: ".react-datepicker__day--outside-month",
+					});
+
+					act(() => {
+						fireEvent.click(dayButton);
 					});
 				},
 			],
@@ -84,7 +87,7 @@ afterEach(() => {
 	cleanup();
 });
 
-test("change input", async () => {
+test("input", async () => {
 	const engine = render({});
 
 	await engine.run("changeInput", "test");
@@ -92,10 +95,13 @@ test("change input", async () => {
 	expect(engine.accessors.input.get()).toHaveProperty("value", "test");
 });
 
-test("open dialog", async () => {
+test("date picker", async () => {
 	const engine = render({});
 
-	await engine.run("openDialog");
+	await engine.run("changeDatepicker", 1);
 
-	expect(engine.qs.getByRole("dialog")).toBeTruthy();
+	expect(engine.accessors.dateInput.get()).toHaveProperty(
+		"value",
+		"10/01/2023",
+	);
 });
