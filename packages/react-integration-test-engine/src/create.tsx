@@ -8,6 +8,7 @@ import type {
 	AccessorsType,
 	EngineType,
 	OptionsType,
+	RunScenatioParameters,
 	WrapperType,
 } from "./types";
 
@@ -27,6 +28,11 @@ export function create<
 		WrapperType<any, any>
 	>,
 	FireEvents extends Record<string, [keyof Queries, EventType]>,
+	Scenarios extends Record<
+		string,
+		// biome-ignore lint/suspicious/noExplicitAny: supports any arguments
+		[keyof Queries, (element: HTMLElement, ...args: any[]) => Promise<void>]
+	>,
 >(
 	Component: ComponentType<Props>,
 	defaultProps: Props,
@@ -35,7 +41,8 @@ export function create<
 		queries,
 		wrappers,
 		wrapperDefaultParams,
-	}: OptionsType<Queries, Wrappers, FireEvents>,
+		scenarios,
+	}: OptionsType<Queries, Wrappers, FireEvents, Scenarios>,
 ) {
 	/**
 	 * function that renders components and initializes accessors, events, wrappers etc.
@@ -52,7 +59,7 @@ export function create<
 				[Key in keyof Wrappers]: Parameters<Wrappers[Key]>[1];
 			}>;
 		} = {},
-	): EngineType<Queries, Wrappers, FireEvents> => {
+	): EngineType<Queries, Wrappers, FireEvents, Scenarios> => {
 		let component = <Component {...defaultProps} {...props} />;
 
 		const wrapperResults: Partial<{
@@ -105,6 +112,23 @@ export function create<
 			});
 		};
 
+		const run = async <Key extends keyof Scenarios>(
+			scenarioKey: Key,
+			...args: RunScenatioParameters<Scenarios[Key][1]>
+		) => {
+			if (!scenarios) {
+				throw new Error(
+					"[react-integration-test-engine] `scenarios` is not provided",
+				);
+			}
+
+			const [accessor, scenario] = scenarios[scenarioKey];
+
+			const element = accessors[accessor].get();
+
+			await scenario(element, ...args);
+		};
+
 		return {
 			accessors,
 			fireEvent: callFireEvent,
@@ -112,6 +136,7 @@ export function create<
 			wrappers: wrapperResults as {
 				[Key in keyof Wrappers]: ReturnType<Wrappers[Key]>[1];
 			},
+			run,
 		};
 	};
 

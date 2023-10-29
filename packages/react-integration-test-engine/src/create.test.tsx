@@ -338,3 +338,59 @@ describe("fireEvent", () => {
 		}).toThrow();
 	});
 });
+
+describe("run", () => {
+	test("should run scenario by key", async () => {
+		const element = document.createElement("div");
+
+		vi.mocked(accessors.get).mockReturnValue(element);
+
+		const scenario = vi.fn();
+
+		const engine = create(TestComponent, defaultProps, {
+			queries: {
+				accessorKey: {
+					query: AccessorQueryType.AltText,
+					parameters: ["test"],
+				},
+			},
+			scenarios: {
+				testRun: ["accessorKey", scenario],
+			},
+		});
+
+		const result = engine({});
+
+		await result.run("testRun", "foo", "bar");
+
+		expect(scenario).toHaveBeenCalledTimes(1);
+		expect(scenario).toHaveBeenCalledWith(element, "foo", "bar");
+	});
+
+	test("should throw an error if `scenarios` is not provided", async () => {
+		const element = document.createElement("div");
+
+		vi.mocked(accessors.get).mockReturnValue(element);
+
+		const engine = create(TestComponent, defaultProps, {
+			queries: {
+				accessorKey: {
+					query: AccessorQueryType.AltText,
+					parameters: ["test"],
+				},
+			},
+		});
+
+		const result = engine({});
+
+		let hasError = false;
+
+		try {
+			await result.run("testRun");
+		} catch (e) {
+			hasError = true;
+		}
+
+		expect(hasError).toBe(true);
+	});
+});

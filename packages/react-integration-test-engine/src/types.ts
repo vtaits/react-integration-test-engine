@@ -5,6 +5,13 @@ import type {
 } from "@testing-library/react";
 import type { ReactElement } from "react";
 
+export type RunScenatioParameters<F> = F extends (
+	element: HTMLElement,
+	...rest: infer R
+) => Promise<void>
+	? R
+	: never;
+
 export type QueryKeys =
 	| "getByRole"
 	| "getAllByRole"
@@ -233,6 +240,11 @@ export type OptionsType<
 		WrapperType<any, any>
 	>,
 	FireEvents extends Record<string, [keyof Queries, EventType]>,
+	Scenarios extends Record<
+		string,
+		// biome-ignore lint/suspicious/noExplicitAny: supports any arguments
+		[keyof Queries, (element: HTMLElement, ...args: any[]) => Promise<void>]
+	>,
 > = Readonly<{
 	/**
 	 * An object whose values are queries to rendered elements, and keys can be used to access them
@@ -331,6 +343,7 @@ export type OptionsType<
 	 * ```
 	 */
 	fireEvents?: FireEvents;
+	scenarios?: Scenarios;
 }>;
 
 export type EngineType<
@@ -341,6 +354,11 @@ export type EngineType<
 		WrapperType<any, any>
 	>,
 	FireEvents extends Record<string, [keyof Queries, EventType]>,
+	Scenarios extends Record<
+		string,
+		// biome-ignore lint/suspicious/noExplicitAny: supports any arguments
+		[keyof Queries, (element: HTMLElement, ...args: any[]) => Promise<void>]
+	>,
 > = Readonly<{
 	/**
 	 * Result of `render` of `@testing-library/react`
@@ -445,4 +463,8 @@ export type EngineType<
 	 */
 	// biome-ignore lint/complexity/noBannedTypes: the format of `@testing-library/react`
 	fireEvent: (eventKey: keyof FireEvents, options?: {} | undefined) => void;
+	run: <Key extends keyof Scenarios>(
+		scenarioKey: Key,
+		...args: RunScenatioParameters<Scenarios[Key][1]>
+	) => Promise<void>;
 }>;
