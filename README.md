@@ -151,3 +151,95 @@ test("should call callback correctly", () => {
 	expect(callback).toHaveBeenCalledWith(1, "2");
 });
 ```
+
+## Scenarios
+
+`fireEvent` is not enough for actions that required several user interactions, e.g. selecting of value from dropdown or date picker etc.
+
+There is a property `scenarios` in the constuctor of engine. You can call the scenario with the `run` method of the engine.
+
+Differences from `events`:
+
+1. Allow multiple interactions;
+
+2. Asynchronous;
+
+3. Doesn't invoke `act` automatically.
+
+Let's write an example test with selecting the value of `react-datepicker` (version `4.21.0`):
+
+At first, let's write a component for testing:
+
+```tsx
+import { type ReactElement, useState } from "react";
+import ReactDatePicker from "react-datepicker";
+
+function Component(): ReactElement {
+	const [date, setDate] = useState<Date | null>(() => new Date(2023, 9, 20));
+
+	return (
+		<ReactDatePicker selected={date} onChange={setDate} />
+	);
+}
+```
+
+Then let's define the engine constructor:
+
+```tsx
+import {
+	act,
+	fireEvent,
+	screen,
+	within,
+} from "@testing-library/react";
+import { AccessorQueryType, create } from "react-integration-test-engine";
+
+const render = create(
+	Component,
+	{},
+	{
+		queries: {
+			dateInput: {
+				query: AccessorQueryType.QuerySelector,
+				parameters: [".react-datepicker__input-container input"],
+			},
+		},
+
+		scenarios: {
+			changeDatepicker: [
+				"dateInput",
+				async (element, day: number) => {
+					act(() => {
+						fireEvent.focus(element);
+					});
+
+					const listbox = await screen.findByRole("listbox");
+
+					const dayButton = within(listbox).getByText(`${day}`, {
+						ignore: ".react-datepicker__day--outside-month",
+					});
+
+					act(() => {
+						fireEvent.click(dayButton);
+					});
+				},
+			],
+		},
+	},
+);
+```
+
+Then let's write a test to change the date:
+
+```tsx
+test("date change", async () => {
+	const engine = render({});
+
+	await engine.run("changeDatepicker", 1);
+
+	expect(engine.accessors.dateInput.get()).toHaveProperty(
+		"value",
+		"10/01/2023",
+	);
+});
+```
