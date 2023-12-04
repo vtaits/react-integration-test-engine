@@ -8,7 +8,8 @@ import type { ReactElement } from "react";
 export type RunScenatioParameters<F> = F extends (
 	element: HTMLElement,
 	...rest: infer R
-) => Promise<void>
+	// biome-ignore lint/suspicious/noExplicitAny: supports any params and result
+) => any
 	? R
 	: never;
 
@@ -243,7 +244,7 @@ export type OptionsType<
 	Scenarios extends Record<
 		string,
 		// biome-ignore lint/suspicious/noExplicitAny: supports any arguments
-		[keyof Queries, (element: HTMLElement, ...args: any[]) => Promise<void>]
+		[keyof Queries, (element: HTMLElement, ...args: any[]) => any]
 	>,
 > = Readonly<{
 	/**
@@ -345,8 +346,9 @@ export type OptionsType<
 	fireEvents?: FireEvents;
 	/**
 	 * An object whose values are tupples of keys of queries and scenario functions.
-	 * Scenario function is an asynchronous function whose first argument is the result
-	 * of call `get` accessor of the query, and other arguments should be provided in the call of `run` function.
+	 * Scenario is a function whose first argument is the result of call `get` accessor of the query,
+	 * and other arguments should be provided in the call of `run` function.
+	 * The result of the scenario will be the result of the call of `run` function.
 	 * Unlike the `fireEvents`, multiple events can be fired in one scenario. It can be useful for selecting of values
 	 * in dropdowns and date pickers
 	 *
@@ -407,7 +409,7 @@ export type EngineType<
 	Scenarios extends Record<
 		string,
 		// biome-ignore lint/suspicious/noExplicitAny: supports any arguments
-		[keyof Queries, (element: HTMLElement, ...args: any[]) => Promise<void>]
+		[keyof Queries, (element: HTMLElement, ...args: any[]) => any]
 	>,
 > = Readonly<{
 	/**
@@ -517,9 +519,10 @@ export type EngineType<
 	 * Run scenario by key, see `scenarios` property of options
 	 * @param scenarioKey key of `scenarios` option
 	 * @param args scenario arguments
+	 * @returns the result of the scenario function
 	 */
 	run: <Key extends keyof Scenarios>(
 		scenarioKey: Key,
 		...args: RunScenatioParameters<Scenarios[Key][1]>
-	) => Promise<void>;
+	) => ReturnType<Scenarios[Key][1]>;
 }>;

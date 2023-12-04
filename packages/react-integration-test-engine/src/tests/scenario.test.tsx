@@ -56,8 +56,6 @@ const render = create(
 							},
 						});
 					});
-
-					return Promise.resolve();
 				},
 			],
 
@@ -87,10 +85,10 @@ afterEach(() => {
 	cleanup();
 });
 
-test("input", async () => {
+test("input", () => {
 	const engine = render({});
 
-	await engine.run("changeInput", "test");
+	engine.run("changeInput", "test");
 
 	expect(engine.accessors.input.get()).toHaveProperty("value", "test");
 });

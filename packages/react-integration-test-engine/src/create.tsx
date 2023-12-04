@@ -31,7 +31,7 @@ export function create<
 	Scenarios extends Record<
 		string,
 		// biome-ignore lint/suspicious/noExplicitAny: supports any arguments
-		[keyof Queries, (element: HTMLElement, ...args: any[]) => Promise<void>]
+		[keyof Queries, (element: HTMLElement, ...args: any[]) => any]
 	>,
 >(
 	Component: ComponentType<Props>,
@@ -112,7 +112,7 @@ export function create<
 			});
 		};
 
-		const run = async <Key extends keyof Scenarios>(
+		const run = <Key extends keyof Scenarios>(
 			scenarioKey: Key,
 			...args: RunScenatioParameters<Scenarios[Key][1]>
 		) => {
@@ -126,7 +126,7 @@ export function create<
 
 			const element = accessors[accessor].get();
 
-			await scenario(element, ...args);
+			return scenario(element, ...args);
 		};
 
 		return {

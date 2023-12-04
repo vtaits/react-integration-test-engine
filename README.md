@@ -154,6 +154,8 @@ test("should call callback correctly", () => {
 
 ## Scenarios
 
+### Execution of complex actions
+
 `fireEvent` is not enough for actions that required several user interactions, e.g. selecting of value from dropdown or date picker etc.
 
 There is a property `scenarios` in the constuctor of engine. You can call the scenario with the `run` method of the engine.
@@ -162,9 +164,9 @@ Differences from `events`:
 
 1. Allow multiple interactions;
 
-2. Asynchronous;
+2. Doesn't invoke `act` automatically;
 
-3. Doesn't invoke `act` automatically.
+3. Can return something.
 
 Let's write an example test with selecting the value of `react-datepicker` (version `4.21.0`):
 
@@ -241,5 +243,99 @@ test("date change", async () => {
 		"value",
 		"10/01/2023",
 	);
+});
+```
+
+### Complex data collection
+
+Let's test a table.
+
+```tsx
+import type { ReactElement, ReactNode } from "react";
+
+type RowType = Readonly<{
+	id: number;
+	foo: ReactNode;
+	bar: ReactNode;
+	baz: ReactNode;
+}>;
+
+type Props = Readonly<{
+	rows: readonly RowType[];
+}>;
+
+function Component({ rows }: Props): ReactElement {
+	return (
+		<table>
+			<tbody>
+				{rows.map(({ id, foo, bar, baz }) => (
+					<tr key={id}>
+						<td>{foo}</td>
+						<td>{bar}</td>
+						<td>{baz}</td>
+					</tr>
+				))}
+			</tbody>
+		</table>
+	);
+}
+```
+
+Suppose it's needed to make an array of the text contents of a certain row of the table. Let's write this scenario:
+
+```tsx
+import { AccessorQueryType, create } from "react-integration-test-engine";
+
+const defaultProps: Props = {
+	rows: [],
+};
+
+const render = create(Component, defaultProps, {
+	queries: {
+		table: {
+			query: AccessorQueryType.QuerySelector,
+			parameters: ["table"],
+		},
+	},
+	scenarios: {
+		getRenderedRow: [
+			"table",
+			(tableNode, index: number) => {
+				const tableRow = tableNode.querySelector(`tr:nth-child(${index})`);
+
+				if (!tableRow || !(tableRow instanceof HTMLElement)) {
+					throw new Error("row is not rendered");
+				}
+
+				return [...tableRow.childNodes].map((node) => node.textContent);
+			},
+		],
+	},
+});
+```
+
+All that's left to do is run this scenario:
+
+```tsx
+test("render rows", () => {
+	const engine = render({
+		rows: [
+			{
+				id: 1,
+				foo: "foo 1",
+				bar: "bar 1",
+				baz: "baz 1",
+			},
+			{
+				id: 2,
+				foo: "foo 2",
+				bar: "bar 2",
+				baz: "baz 2",
+			},
+		],
+	});
+
+	expect(engine.run("getRenderedRow", 1)).toEqual(["foo 1", "bar 1", "baz 1"]);
+	expect(engine.run("getRenderedRow", 2)).toEqual(["foo 2", "bar 2", "baz 2"]);
 });
 ```
