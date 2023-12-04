@@ -64,11 +64,11 @@ const queryQs = vi.fn().mockReturnValue(qs);
 const queryBaseElement = vi.fn();
 
 beforeEach(() => {
-	Object.entries(qs).forEach(([key, mock]) => {
+	for (const [key, mock] of Object.entries(qs)) {
 		if (typeof mock === "function") {
 			mock.mockReturnValue(`${key} return`);
 		}
-	});
+	}
 });
 
 beforeEach(() => {
@@ -117,7 +117,7 @@ describe.each([
 			expect(queryQs).toHaveBeenCalledTimes(1);
 			expect(queryQs).toHaveBeenCalledWith(true);
 
-			Object.entries(qs).forEach(([key, mock]) => {
+			for (const [key, mock] of Object.entries(qs)) {
 				if (key === functionName) {
 					expect(mock).toHaveBeenCalledTimes(1);
 					expect(mock).toHaveBeenCalledWith("arg1", {
@@ -127,7 +127,7 @@ describe.each([
 				} else {
 					expect(mock).toHaveBeenCalledTimes(0);
 				}
-			});
+			}
 		},
 	);
 
@@ -147,9 +147,9 @@ describe.each([
 			expect(queryQs).toHaveBeenCalledTimes(1);
 			expect(queryQs).toHaveBeenCalledWith(false);
 
-			Object.entries(qs).forEach(([, mock]) => {
+			for (const [, mock] of Object.entries(qs)) {
 				expect(mock).toHaveBeenCalledTimes(0);
-			});
+			}
 		});
 
 		test("return result of corresponding function", () => {
@@ -164,7 +164,7 @@ describe.each([
 			expect(queryQs).toHaveBeenCalledTimes(1);
 			expect(queryQs).toHaveBeenCalledWith(false);
 
-			Object.entries(qs).forEach(([key, mock]) => {
+			for (const [key, mock] of Object.entries(qs)) {
 				if (key === functionName) {
 					expect(mock).toHaveBeenCalledTimes(1);
 					expect(mock).toHaveBeenCalledWith("arg1", {
@@ -174,7 +174,7 @@ describe.each([
 				} else {
 					expect(mock).toHaveBeenCalledTimes(0);
 				}
-			});
+			}
 		});
 	});
 
@@ -194,7 +194,7 @@ describe.each([
 
 			expect(waitFor).toHaveBeenCalledTimes(1);
 
-			Object.entries(qs).forEach(([key, mock]) => {
+			for (const [key, mock] of Object.entries(qs)) {
 				if (key === functionName) {
 					expect(mock).toHaveBeenCalledTimes(1);
 					expect(mock).toHaveBeenCalledWith("arg1", {
@@ -204,7 +204,7 @@ describe.each([
 				} else {
 					expect(mock).toHaveBeenCalledTimes(0);
 				}
-			});
+			}
 
 			expect(queryQs).toHaveBeenCalledTimes(0);
 

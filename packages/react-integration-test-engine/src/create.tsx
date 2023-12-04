@@ -73,7 +73,7 @@ export function create<
 				);
 			}
 
-			Object.entries(wrappers).forEach(([wrapperKey, wrapper]) => {
+			for (const [wrapperKey, wrapper] of Object.entries(wrappers)) {
 				const [nextComponent, wrapperResult] = wrapper(component, {
 					...wrapperDefaultParams[wrapperKey],
 					...wrapperParams[wrapperKey],
@@ -81,7 +81,7 @@ export function create<
 
 				component = nextComponent;
 				wrapperResults[wrapperKey as keyof Wrappers] = wrapperResult;
-			});
+			}
 		}
 
 		const qs = render(component);
