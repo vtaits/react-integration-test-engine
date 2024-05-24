@@ -2,7 +2,11 @@ import { type RenderResult, within } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { createAccessors, createAccessorsInternal } from "./createAccessors";
 import { createAccessorsBase } from "./createAccessorsBase";
-import { AccessorQueryType, type AccessorsType, QueriesType } from "./types";
+import {
+	AccessorQueryType,
+	type AccessorsType,
+	type QueriesType,
+} from "./types";
 
 vi.mock("@testing-library/react");
 

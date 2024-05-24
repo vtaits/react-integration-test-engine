@@ -28,6 +28,7 @@ const counterWrapper: WrapperType<
 			value={{
 				increase,
 			}}
+			key={0}
 		>
 			{children}
 		</WrapperContext.Provider>,

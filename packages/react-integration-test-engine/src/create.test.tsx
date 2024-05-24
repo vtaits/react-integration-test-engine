@@ -5,6 +5,7 @@ import {
 	render,
 } from "@testing-library/react";
 import type { ReactElement } from "react";
+import { isElement } from "react-is";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { create } from "./create";
 import { createAccessors } from "./createAccessors";
@@ -66,6 +67,10 @@ describe("render", () => {
 	function getComponentProps() {
 		expect(render).toHaveBeenCalledTimes(1);
 		const node = mockedRender.mock.calls[0][0];
+
+		if (!isElement(node)) {
+			throw new Error("rendered node should be a react element");
+		}
 
 		expect(node.type).toBe(TestComponent);
 		return node.props;
@@ -199,14 +204,14 @@ describe("wrappers", () => {
 
 	test("fill results", () => {
 		const wrapper1 = vi.fn().mockReturnValue([
-			<div />,
+			<div key={0} />,
 			{
 				foo: "bar",
 			},
 		]);
 
 		const wrapper2 = vi.fn().mockReturnValue([
-			<div />,
+			<div key={0} />,
 			{
 				baz: 3,
 			},
@@ -237,9 +242,9 @@ describe("wrappers", () => {
 	});
 
 	test("call with correct parameters", () => {
-		const wrapper1 = vi.fn().mockReturnValue([<div />, null]);
+		const wrapper1 = vi.fn().mockReturnValue([<div key={0} />, null]);
 
-		const wrapper2 = vi.fn().mockReturnValue([<div />, null]);
+		const wrapper2 = vi.fn().mockReturnValue([<div key={0} />, null]);
 
 		const render = create(TestComponent, defaultProps, {
 			queries: {},

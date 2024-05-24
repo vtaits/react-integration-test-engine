@@ -9,7 +9,7 @@ type NestedComponentProps = Readonly<{
 function NestedComponent({ roleContent }: NestedComponentProps): ReactElement {
 	return (
 		<>
-			<div role="testRole">{roleContent}</div>
+			<div role="caption">{roleContent}</div>
 		</>
 	);
 }
@@ -44,7 +44,7 @@ const render = create(
 
 			withRole: {
 				query: AccessorQueryType.Role,
-				parameters: ["testRole"],
+				parameters: ["caption"],
 			},
 		},
 	},
