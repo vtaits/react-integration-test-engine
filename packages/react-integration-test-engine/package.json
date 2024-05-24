@@ -1,6 +1,6 @@
 {
   "name": "react-integration-test-engine",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "Integration test utils for react components",
   "repository": {
     "type": "git",
