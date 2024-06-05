@@ -1,4 +1,4 @@
-import { waitFor } from "@testing-library/react";
+import { waitFor } from "@testing-library/dom";
 import {
 	type AccessorParamsType,
 	AccessorQueryType,

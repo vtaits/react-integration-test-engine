@@ -1,9 +1,9 @@
-import { waitFor } from "@testing-library/react";
+import { waitFor } from "@testing-library/dom";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { createAccessorsBase } from "./createAccessorsBase";
 import { type AccessorParamsType, AccessorQueryType } from "./types";
 
-vi.mock("@testing-library/react");
+vi.mock("@testing-library/dom");
 const mockedWaitFor = vi.mocked(waitFor);
 
 const querySelectorAll = vi.fn();
