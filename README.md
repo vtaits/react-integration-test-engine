@@ -1,3 +1,9 @@
+# ⚠️ Deprecation warning ⚠️
+
+After writing numerous tests and experimenting with various approaches, it turned out that this library is excessive and unnecessary.
+
+You can be able to read tests from top to bottom without reading declarations of selectors and actions. [testing-library](https://testing-library.com/) and [playwright](https://playwright.dev/) provide a powerful toolkit for selecting elements by their roles, `aria` attributes, labels and other parameters. And a copy-paste in tests is more readable than a sophisticated structure.
+
 # react-integration-test-engine
 
 [![NPM](https://img.shields.io/npm/v/react-integration-test-engine.svg)](https://www.npmjs.com/package/react-integration-test-engine)
@@ -28,7 +34,7 @@ yarn add react-integration-test-engine @testing-library/react --dev
 
 Let's test a component. I'm using `vitest`, but you can use your favourite test framework
 
-```tsx
+ ```tsx
 import type {
 	ReactElement,
 } from "react";
